@@ -1,0 +1,243 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: team status snapshot
+# ──────────────────────────────────────────────
+# Quick dashboard from your YAML files.
+# Requires: yq (https://github.com/mikefarah/yq)
+#
+# Usage:
+#   team-status                Show all
+#   team-status engagements    Show engagement burn rates
+#   team-status team           Show team utilization
+#   team-status promotion      Show promotion tracker summary
+# ──────────────────────────────────────────────
+
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+DIM='\033[2m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
+TEAM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/team"
+SECTION="${1:-all}"
+
+# ── Check for yq ──
+if ! command -v yq &>/dev/null; then
+    echo -e "${YELLOW}  yq not found. Install it:${RESET}"
+    echo -e "  ${CYAN}brew install yq${RESET}  or  ${CYAN}snap install yq${RESET}"
+    echo ""
+    echo -e "  ${DIM}Without yq, showing raw file summaries:${RESET}"
+    echo ""
+
+    # Fallback: just list what exists
+    echo -e "  ${BOLD}Engagements:${RESET}"
+    for f in "$TEAM_DIR"/engagements/*.yml; do
+        [[ "$(basename "$f")" == "TEMPLATE.yml" ]] && continue
+        [[ -f "$f" ]] && echo "    $(basename "$f" .yml)"
+    done
+    echo ""
+    echo -e "  ${BOLD}1:1 Notes:${RESET}"
+    for f in "$TEAM_DIR"/one-on-ones/*.md; do
+        [[ "$(basename "$f")" == "TEMPLATE.md" ]] && continue
+        [[ -f "$f" ]] && echo "    $(basename "$f" .md)"
+    done
+    echo ""
+    echo -e "  ${DIM}Install yq for the full dashboard.${RESET}"
+    exit 0
+fi
+
+# ── Header ──
+echo ""
+echo -e "  ${BOLD}${CYAN}Team Dashboard${RESET}"
+echo -e "  ${DIM}$(date '+%A, %B %d %Y')${RESET}"
+echo ""
+
+# ══════════════════════════════════════════════
+# Engagements
+# ══════════════════════════════════════════════
+show_engagements() {
+    echo -e "  ${BOLD}Engagements${RESET}"
+    echo "  ────────────────────────────────────────"
+
+    local found=false
+    for f in "$TEAM_DIR"/engagements/*.yml; do
+        [[ "$(basename "$f")" == "TEMPLATE.yml" ]] && continue
+        [[ ! -f "$f" ]] && continue
+        found=true
+
+        local name=$(yq '.engagement.name // "Unnamed"' "$f")
+        local client=$(yq '.engagement.client // "—"' "$f")
+        local status=$(yq '.engagement.status // "—"' "$f")
+        local total_hours=$(yq '.budget.total_hours // 0' "$f")
+        local burned=$(yq '.budget.hours_burned // 0' "$f")
+        local runway=$(yq '.budget.runway_status // "—"' "$f")
+
+        # Color for status
+        local status_color="$GREEN"
+        [[ "$runway" == "amber" ]] && status_color="$YELLOW"
+        [[ "$runway" == "red" ]] && status_color="$RED"
+        [[ "$status" == "at-risk" ]] && status_color="$RED"
+
+        local pct=0
+        [[ "$total_hours" -gt 0 ]] && pct=$((burned * 100 / total_hours))
+
+        printf "  ${status_color}●${RESET} %-30s %s\n" "$name" "$client"
+        printf "    Budget: %s/%s hrs (%d%%)  Status: ${status_color}%s${RESET}\n" "$burned" "$total_hours" "$pct" "$runway"
+
+        # Show open risks
+        local risk_count=$(yq '.risks | length // 0' "$f")
+        if [[ "$risk_count" -gt 0 ]]; then
+            local open_risks=$(yq '[.risks[] | select(.status == "open")] | length' "$f" 2>/dev/null || echo "0")
+            [[ "$open_risks" -gt 0 ]] && printf "    ${RED}Risks: %s open${RESET}\n" "$open_risks"
+        fi
+        echo ""
+    done
+
+    if ! $found; then
+        echo -e "    ${DIM}No engagements yet. Copy the template:${RESET}"
+        echo -e "    ${CYAN}cp team/engagements/TEMPLATE.yml team/engagements/client-x.yml${RESET}"
+        echo ""
+    fi
+}
+
+# ══════════════════════════════════════════════
+# Team
+# ══════════════════════════════════════════════
+show_team() {
+    local roster="$TEAM_DIR/roster.yml"
+    if [[ ! -f "$roster" ]]; then
+        echo -e "  ${BOLD}Team${RESET}"
+        echo -e "    ${DIM}No roster yet. Fill in team/roster.yml${RESET}"
+        echo ""
+        return
+    fi
+
+    echo -e "  ${BOLD}Team${RESET}"
+    echo "  ────────────────────────────────────────"
+
+    local count=$(yq '.members | length // 0' "$roster")
+    if [[ "$count" -eq 0 ]]; then
+        echo -e "    ${DIM}No members in roster yet. Add them to team/roster.yml${RESET}"
+    else
+        yq -r '.members[] | "  \(.name // "?") — \(.role // "?") — \(.current_engagement.client // "bench") (\(.current_engagement.allocation // 0)%)"' "$roster" 2>/dev/null || true
+    fi
+
+    # Skills gaps
+    local gaps=$(yq '.skills_gaps | length // 0' "$roster")
+    if [[ "$gaps" -gt 0 ]]; then
+        echo ""
+        echo -e "  ${YELLOW}Skills gaps:${RESET}"
+        yq -r '.skills_gaps[] | "    ● \(.skill) (\(.urgency))"' "$roster" 2>/dev/null || true
+    fi
+    echo ""
+}
+
+# ══════════════════════════════════════════════
+# Promotion progress
+# ══════════════════════════════════════════════
+show_promotion() {
+    local tracker="$TEAM_DIR/promotion-tracker.yml"
+    if [[ ! -f "$tracker" ]]; then
+        echo -e "  ${BOLD}Promotion Tracker${RESET}"
+        echo -e "    ${DIM}Not started. Fill in team/promotion-tracker.yml${RESET}"
+        echo ""
+        return
+    fi
+
+    echo -e "  ${BOLD}Promotion Tracker${RESET}"
+    echo "  ────────────────────────────────────────"
+
+    local target=$(yq '.target_role // "—"' "$tracker")
+    local target_date=$(yq '.target_date // "—"' "$tracker")
+    local start=$(yq '.start_date // "—"' "$tracker")
+
+    echo -e "  Target: ${BOLD}$target${RESET} by $target_date"
+
+    # Calculate days remaining
+    if [[ "$target_date" != "—" ]]; then
+        local today=$(date +%s)
+        local target_ts=$(date -d "$target_date" +%s 2>/dev/null || date -j -f "%Y-%m-%d" "$target_date" +%s 2>/dev/null || echo "0")
+        if [[ "$target_ts" -gt 0 ]]; then
+            local days_left=$(( (target_ts - today) / 86400 ))
+            echo -e "  ${DIM}$days_left days remaining${RESET}"
+        fi
+    fi
+    echo ""
+
+    # Count evidence per pillar
+    local delivery_count=$(yq '.delivery.evidence | length // 0' "$tracker")
+    local people_count=$(yq '.people.evidence | length // 0' "$tracker")
+    local bd_count=$(yq '.business_development.evidence | length // 0' "$tracker")
+    local tl_count=$(yq '.thought_leadership.contributions | length // 0' "$tracker")
+    local ops_count=$(yq '.operations.evidence | length // 0' "$tracker")
+
+    printf "  %-25s %s evidence items\n" "Delivery & Revenue:" "$delivery_count"
+    printf "  %-25s %s evidence items\n" "People Development:" "$people_count"
+    printf "  %-25s %s evidence items\n" "Business Development:" "$bd_count"
+    printf "  %-25s %s contributions\n" "Thought Leadership:" "$tl_count"
+    printf "  %-25s %s evidence items\n" "Operations:" "$ops_count"
+    echo ""
+
+    # Show latest quarterly review if exists
+    local latest_q=$(yq '.quarterly_reviews[-1].quarter // null' "$tracker")
+    if [[ "$latest_q" != "null" ]]; then
+        local rating=$(yq '.quarterly_reviews[-1].delivery_rating // "—"' "$tracker")
+        echo -e "  ${DIM}Latest review ($latest_q): delivery=$rating${RESET}"
+    fi
+    echo ""
+}
+
+# ══════════════════════════════════════════════
+# Upcoming 1:1s
+# ══════════════════════════════════════════════
+show_oneononones() {
+    echo -e "  ${BOLD}1:1 Notes${RESET}"
+    echo "  ────────────────────────────────────────"
+
+    local found=false
+    for f in "$TEAM_DIR"/one-on-ones/*.md; do
+        [[ "$(basename "$f")" == "TEMPLATE.md" ]] && continue
+        [[ ! -f "$f" ]] && continue
+        found=true
+
+        local name=$(basename "$f" .md | tr '-' ' ')
+        local last_date=$(grep -m1 "^## " "$f" 2>/dev/null | sed 's/^## //' || echo "no entries")
+        printf "  %-25s last: %s\n" "$name" "$last_date"
+    done
+
+    if ! $found; then
+        echo -e "    ${DIM}No 1:1 notes yet. Create from template:${RESET}"
+        echo -e "    ${CYAN}cp team/one-on-ones/TEMPLATE.md team/one-on-ones/sarah-chen.md${RESET}"
+    fi
+    echo ""
+}
+
+# ── Run sections ──
+case "$SECTION" in
+    all)
+        show_engagements
+        show_team
+        show_promotion
+        show_oneononones
+        ;;
+    engagements|eng)
+        show_engagements
+        ;;
+    team)
+        show_team
+        ;;
+    promotion|promo)
+        show_promotion
+        ;;
+    1on1|one-on-ones|1:1)
+        show_oneononones
+        ;;
+    *)
+        echo "Usage: team-status [all|engagements|team|promotion|1on1]"
+        exit 1
+        ;;
+esac

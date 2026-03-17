@@ -37,10 +37,15 @@ help: ## Show this help
 deps-lowpower: ## Install minimal packages (tmux, neovim, CLI tools)
 	@echo -e "$(GREEN)Installing low-power packages...$(RESET)"
 ifeq ($(UNAME),Darwin)
-	brew install tmux neovim ripgrep fd fzf git curl direnv bat eza
+	brew install tmux neovim ripgrep fd fzf git curl direnv bat eza yq
 else
 	sudo apt-get update && sudo apt-get install -y \
 		tmux neovim ripgrep fd-find fzf git curl unzip direnv bat
+	@# yq
+	@if ! command -v yq &>/dev/null; then \
+		echo -e "$(YELLOW)  Installing yq...$(RESET)"; \
+		sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq; \
+	fi
 	@# eza (not in older apt repos — install from cargo if missing)
 	@if ! command -v eza &>/dev/null; then \
 		echo -e "$(DIM)  eza not in apt, will be available after cargo tools$(RESET)"; \
@@ -51,7 +56,7 @@ deps-full: ## Install full packages (WezTerm, neovim, CLI tools)
 	@echo -e "$(GREEN)Installing full packages...$(RESET)"
 ifeq ($(UNAME),Darwin)
 	brew install --cask wezterm
-	brew install neovim ripgrep fd fzf git curl direnv bat eza
+	brew install neovim ripgrep fd fzf git curl direnv bat eza yq
 else
 	@if ! command -v wezterm &>/dev/null; then \
 		echo -e "$(YELLOW)Installing WezTerm...$(RESET)"; \
@@ -189,7 +194,7 @@ git-config: ## Link git aliases and defaults (does NOT touch user.name/email)
 onboard-link: ## Add CLI tools to PATH (~/.local/bin)
 	@echo -e "$(YELLOW)Linking CLI tools...$(RESET)"
 	@mkdir -p $(HOME)/.local/bin
-	@for cmd in onboard scaffold sqlprism-init ssh-setup install-fonts; do \
+	@for cmd in onboard scaffold sqlprism-init ssh-setup install-fonts team-status; do \
 		ln -sf $(CURDIR)/bin/$$cmd $(HOME)/.local/bin/$$cmd; \
 		chmod +x $(CURDIR)/bin/$$cmd; \
 		echo -e "$(GREEN)  $$cmd → ~/.local/bin/$$cmd$(RESET)"; \
@@ -271,7 +276,7 @@ uninstall: ## Remove all symlinks and shell integration
 	@rm -f $(XDG_CONFIG_HOME)/starship.toml
 	@rm -f $(XDG_CONFIG_HOME)/Code/User/settings.json
 	@rm -f $(XDG_CONFIG_HOME)/Code/User/keybindings.json
-	@for cmd in onboard scaffold sqlprism-init ssh-setup install-fonts; do \
+	@for cmd in onboard scaffold sqlprism-init ssh-setup install-fonts team-status; do \
 		rm -f $(HOME)/.local/bin/$$cmd; \
 	done
 	@git config --global --unset include.path 2>/dev/null || true

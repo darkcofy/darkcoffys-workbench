@@ -1,0 +1,170 @@
+# ──────────────────────────────────────────────
+# Promotion Tracker — Data Architect Manager → Senior Manager / Director
+# ──────────────────────────────────────────────
+# Big 4 promotions are driven by 5 pillars. Track your evidence
+# against each one. Update weekly. This is YOUR review document
+# when the time comes — the person with the best evidence wins.
+#
+# Keep this file PRIVATE (in .gitignore or a private repo).
+# ──────────────────────────────────────────────
+
+target_role: "Senior Manager"  # or Director
+target_date: "2027-09-01"      # 18 months from start
+start_date: "2026-04-01"       # adjust to your actual start
+current_role: "Manager — Data Architecture"
+service_line: ""               # e.g., "Technology Consulting" / "Data & Analytics"
+counselor: ""                  # your career counselor / mentor
+sponsor: ""                    # the partner who champions your promotion
+
+# ═══════════════════════════════════════════════
+# PILLAR 1: Client Delivery & Revenue
+# ═══════════════════════════════════════════════
+# What they measure: utilization %, revenue managed, client satisfaction,
+# delivery quality, ability to run engagements independently.
+#
+# Target: 75-85% utilization, manage $1M+ in engagements
+
+delivery:
+  utilization_target: 80  # percent
+  revenue_managed: 0      # total $ value of engagements you're running
+
+  engagements:
+    # - name: "Client X — Data Platform Build"
+    #   client: "Client X"
+    #   role: "Engagement lead"  # lead | architect | contributor
+    #   budget_hours: 800
+    #   budget_value: 320000
+    #   start: "2026-04-15"
+    #   end: "2026-09-30"
+    #   status: active  # active | completed | at-risk
+    #   satisfaction: null  # 1-5, from client feedback
+    #   key_wins:
+    #     - "Delivered 2 weeks early"
+    #     - "Client extended SOW by $150K"
+
+  evidence:
+    # - date: "2026-06-15"
+    #   what: "Led architecture review for Client X migration"
+    #   impact: "Identified $200K savings by consolidating 3 pipelines"
+
+# ═══════════════════════════════════════════════
+# PILLAR 2: People & Team Development
+# ═══════════════════════════════════════════════
+# What they measure: team size managed, people you've developed/promoted,
+# mentoring, knowledge sharing, retention of your team.
+#
+# Target: manage 5-10 people, develop 2+ for promotion
+
+people:
+  direct_reports: 0
+  people_developed_for_promotion: 0
+
+  team:
+    # - name: "Sarah Chen"
+    #   role: "Senior Analyst"
+    #   started_under_you: "2026-04-01"
+    #   development_goal: "Promote to Manager by Q1 2027"
+    #   strengths: ["SQL", "dbt", "stakeholder comms"]
+    #   growth_areas: ["architecture design", "client-facing"]
+    #   actions:
+    #     - "Put her on Client Y arch review to build experience"
+    #     - "Pair her with partner for client workshop"
+
+  evidence:
+    # - date: "2026-08-01"
+    #   what: "Sarah led her first client architecture workshop"
+    #   impact: "Client gave positive feedback, she's on track for promotion"
+    # - date: "2026-09-15"
+    #   what: "Ran dbt best practices lunch-and-learn (15 attendees)"
+
+# ═══════════════════════════════════════════════
+# PILLAR 3: Business Development
+# ═══════════════════════════════════════════════
+# What they measure: pipeline contribution, proposals written,
+# SOW extensions, new logos, cross-sell/upsell.
+#
+# Target: contribute to $500K+ in pipeline, win $200K+ in new/extended work
+
+business_development:
+  pipeline_contributed: 0   # $ value of opportunities you helped create
+  revenue_won: 0            # $ value of work actually won
+
+  opportunities:
+    # - name: "Client X — Phase 2 Data Platform"
+    #   type: extension  # new | extension | cross-sell
+    #   value: 150000
+    #   your_role: "Wrote technical approach, priced effort"
+    #   status: proposal  # lead | proposal | won | lost
+    #   date: "2026-07-01"
+
+  evidence:
+    # - date: "2026-06-20"
+    #   what: "Identified dbt migration opportunity at Client Y during delivery"
+    #   impact: "Led to $200K proposal, won in August"
+
+# ═══════════════════════════════════════════════
+# PILLAR 4: Thought Leadership & Market Presence
+# ═══════════════════════════════════════════════
+# What they measure: internal publications, external speaking,
+# eminence in the market, contributions to firm IP/accelerators.
+#
+# Target: 2+ visible contributions (talks, articles, accelerators)
+
+thought_leadership:
+  contributions:
+    # - date: "2026-05-15"
+    #   type: internal  # internal | external | accelerator | publication
+    #   title: "Modern Data Stack Architecture Playbook"
+    #   description: "Created reusable dbt project template for engagements"
+    #   reach: "Used by 3 teams across APAC"
+    # - date: "2026-09-01"
+    #   type: external
+    #   title: "Building Data Platforms at Scale"
+    #   description: "Conference talk at Data Council"
+    #   reach: "200 attendees, 3 inbound client leads"
+
+  internal_visibility:
+    # Track: communities you lead, firm-wide initiatives, cross-team collaborations
+    # - "Co-lead of Data Engineering Community of Practice"
+    # - "Contributor to firm data accelerator demo"
+    # - "Reviewer for firm's dbt standards"
+
+# ═══════════════════════════════════════════════
+# PILLAR 5: Operational Excellence
+# ═══════════════════════════════════════════════
+# What they measure: risk management, compliance, quality,
+# process improvement, efficiency gains.
+
+operations:
+  evidence:
+    # - date: "2026-05-01"
+    #   what: "Standardized CI/CD pipeline across 3 client engagements"
+    #   impact: "Reduced deployment errors by 80%, saved 10 hrs/week"
+    # - date: "2026-07-15"
+    #   what: "Created data quality monitoring framework (reusable)"
+    #   impact: "Adopted by 2 other teams, prevented 3 client incidents"
+
+# ═══════════════════════════════════════════════
+# QUARTERLY SELF-ASSESSMENT
+# ═══════════════════════════════════════════════
+# Update every quarter. Be honest. This feeds into your
+# counselor conversation and year-end review.
+
+quarterly_reviews:
+  # - quarter: "Q2 2026"
+  #   date: "2026-06-30"
+  #   delivery_rating: "on-track"     # ahead | on-track | behind
+  #   people_rating: "on-track"
+  #   bd_rating: "behind"
+  #   leadership_rating: "on-track"
+  #   operations_rating: "on-track"
+  #   top_wins:
+  #     - "Delivered Client X Phase 1 on time and under budget"
+  #     - "Sarah passed her dbt certification"
+  #   gaps:
+  #     - "Haven't contributed to any proposals yet — need to find BD opportunity"
+  #   actions_next_quarter:
+  #     - "Shadow Partner Z on next proposal"
+  #     - "Start writing internal playbook on data mesh patterns"
+  #   blockers:
+  #     - "100% on delivery — no bandwidth for BD. Discuss with counselor."

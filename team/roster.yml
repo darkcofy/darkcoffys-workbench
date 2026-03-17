@@ -1,0 +1,78 @@
+# ──────────────────────────────────────────────
+# Team Roster & Skills Matrix
+# ──────────────────────────────────────────────
+# Track your team's skills, capacity, and development.
+# Update when people join, leave, or grow.
+# ──────────────────────────────────────────────
+
+team_lead:
+  name: ""
+  role: "Manager — Data Architecture"
+  start_date: ""
+
+members:
+  # ── Example entry ──
+  # - name: "Sarah Chen"
+  #   role: "Senior Data Analyst"
+  #   level: "Senior"          # Junior | Mid | Senior | Lead
+  #   start_date: "2025-06-01"
+  #   location: "Sydney"
+  #   utilization_target: 80   # percent
+  #
+  #   skills:
+  #     # Rate 1-5: 1=learning, 2=can do with help, 3=independent,
+  #     #           4=can lead/teach, 5=firm-wide expert
+  #     python: 4
+  #     sql: 5
+  #     dbt: 4
+  #     snowflake: 3
+  #     bigquery: 1
+  #     spark: 2
+  #     airflow: 3
+  #     terraform: 1
+  #     architecture_design: 2
+  #     client_facing: 3
+  #     stakeholder_comms: 3
+  #     mentoring: 2
+  #     documentation: 4
+  #
+  #   current_engagement:
+  #     client: "Client X"
+  #     role: "Lead analyst"
+  #     allocation: 80          # percent of their time
+  #     end_date: "2026-09-30"
+  #
+  #   development:
+  #     goal: "Promote to Manager by Q1 2027"
+  #     focus_areas:
+  #       - "Architecture design — needs exposure to design reviews"
+  #       - "Client-facing skills — shadow on next client workshop"
+  #     certifications:
+  #       - name: "dbt Analytics Engineering"
+  #         status: completed    # planned | in-progress | completed
+  #         date: "2026-03-01"
+  #       - name: "Snowflake SnowPro Core"
+  #         status: planned
+  #     next_review: "2026-06-30"
+  #
+  #   notes: "Strong technically, needs more visibility with partners"
+
+# ── Capacity view ──
+# Quick reference for staffing decisions.
+# Update when allocations change.
+
+capacity_notes: |
+  # Current bench / availability:
+  # - [name]: available from [date], skills: [x, y, z]
+  # - [name]: 40% allocated, has 60% capacity for new work
+
+# ── Skills gap analysis ──
+# What skills does the team need but doesn't have?
+
+skills_gaps:
+  # - skill: "Databricks / Spark"
+  #   urgency: medium   # low | medium | high
+  #   plan: "Send [name] to Databricks training in Q3"
+  # - skill: "Terraform / IaC"
+  #   urgency: low
+  #   plan: "Hire for this in next headcount cycle"

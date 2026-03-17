@@ -1,0 +1,129 @@
+# ──────────────────────────────────────────────
+# Engagement Tracker
+# ──────────────────────────────────────────────
+# Copy this file for each active engagement:
+#   cp TEMPLATE.yml client-x-data-platform.yml
+#
+# Update weekly. This feeds into your status report
+# and is your evidence for the delivery pillar.
+# ──────────────────────────────────────────────
+
+engagement:
+  name: ""                    # e.g., "Data Platform Modernization"
+  client: ""
+  code: ""                    # internal engagement code
+  status: active              # active | completed | on-hold | at-risk
+
+# ── Dates & budget ──
+timeline:
+  start: ""                   # YYYY-MM-DD
+  end: ""                     # planned end
+  actual_end: null
+
+budget:
+  type: "fixed-fee"           # fixed-fee | time-and-materials | retainer
+  total_hours: 0
+  total_value: 0              # $
+  hours_burned: 0
+  hours_remaining: 0
+  burn_rate_weekly: 0         # avg hours/week
+  weeks_remaining: 0          # auto-calculate: hours_remaining / burn_rate_weekly
+  runway_status: "green"      # green (>4 weeks) | amber (2-4 weeks) | red (<2 weeks)
+
+# ── Team ──
+team:
+  # - name: "Sarah Chen"
+  #   role: "Lead analyst"
+  #   allocation: 80          # percent
+  #   hours_burned: 120
+  #   start: "2026-04-15"
+  #   end: "2026-09-30"
+
+# ── Deliverables ──
+deliverables:
+  # - name: "Architecture design document"
+  #   status: completed        # not-started | in-progress | completed | blocked
+  #   due: "2026-05-15"
+  #   completed: "2026-05-10"
+  #   owner: "Alfred"
+  #   notes: "Client signed off, minor feedback incorporated"
+  #
+  # - name: "dbt project — staging layer"
+  #   status: in-progress
+  #   due: "2026-07-01"
+  #   completed: null
+  #   owner: "Sarah Chen"
+  #   percent_complete: 60
+  #   notes: "On track. 12 of 20 staging models done."
+  #
+  # - name: "Data quality framework"
+  #   status: not-started
+  #   due: "2026-08-15"
+  #   owner: "TBD"
+
+# ── Milestones ──
+milestones:
+  # - name: "Architecture sign-off"
+  #   date: "2026-05-15"
+  #   status: completed
+  # - name: "UAT start"
+  #   date: "2026-08-01"
+  #   status: upcoming
+  # - name: "Go-live"
+  #   date: "2026-09-30"
+  #   status: upcoming
+
+# ── Risks & Issues ──
+risks:
+  # - id: R1
+  #   description: "Client DBA availability is limited — blocking access provisioning"
+  #   likelihood: high         # low | medium | high
+  #   impact: high
+  #   status: open             # open | mitigated | closed
+  #   owner: "Alfred"
+  #   mitigation: "Escalated to client PM, backup plan is read-only replica"
+  #   raised: "2026-05-01"
+
+issues:
+  # - id: I1
+  #   description: "Source system has undocumented schema changes weekly"
+  #   status: open
+  #   owner: "Sarah"
+  #   action: "Set up schema drift monitoring, weekly check-in with source team"
+  #   raised: "2026-05-10"
+
+# ── Client stakeholders ──
+stakeholders:
+  # - name: "Jane Director"
+  #   role: "Client sponsor / decision maker"
+  #   relationship: "strong"   # strong | neutral | difficult
+  #   notes: "Champions the project internally. Keep her updated biweekly."
+  # - name: "Bob DBA"
+  #   role: "Technical lead (client side)"
+  #   relationship: "neutral"
+  #   notes: "Overloaded. Be specific in requests. Give 3-day lead time."
+
+# ── Scope changes ──
+scope_changes:
+  # - date: "2026-06-15"
+  #   description: "Client requested real-time dashboard (not in original SOW)"
+  #   type: "change-request"   # in-scope | change-request | descope
+  #   value: 45000             # $ impact
+  #   status: "approved"       # proposed | approved | rejected
+  #   hours: 120
+
+# ── Client satisfaction ──
+satisfaction:
+  # - date: "2026-06-30"
+  #   score: 4                 # 1-5
+  #   feedback: "Happy with delivery pace, wants more proactive communication"
+  #   action: "Start sending weekly email summary, not just status deck"
+
+# ── Weekly notes ──
+# Quick journal — what happened this week. Feeds into status report.
+weekly_notes:
+  # - week: "2026-05-12"
+  #   summary: "Completed staging layer for Stripe. Started Hubspot integration."
+  #   blockers: "Waiting on VPN access for prod database."
+  #   next_week: "Finish Hubspot staging. Start intermediate layer design."
+  #   hours_burned: 42

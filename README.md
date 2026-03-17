@@ -105,6 +105,13 @@ darkcoffys-workbench/
 ├── starship/starship.toml   ← prompt config
 ├── git/gitconfig            ← git aliases + defaults
 ├── vscode/                  ← VS Code settings + extensions
+├── team/                    ← management & career tracking
+│   ├── promotion-tracker.yml← 5-pillar promotion evidence
+│   ├── roster.yml           ← skills matrix + capacity
+│   ├── engagements/         ← per-client tracking
+│   ├── one-on-ones/         ← per-person 1:1 notes
+│   ├── weekly-status/       ← Friday status reports
+│   └── personal/            ← 90-day plan, career goals
 └── CHEATSHEET.md            ← keybinding reference
 ```
 
@@ -575,6 +582,29 @@ gd          # jump to definition
 gr          # find all references
 K           # read docs for symbol under cursor
 ```
+
+---
+
+## Team Management
+
+YAML-driven tracking for managing engagements, people, and your own career progression. See [`team/README.md`](team/README.md) for full details.
+
+```bash
+team-status              # full dashboard
+team-status engagements  # engagement burn rates and risks
+team-status team         # team utilization and skills gaps
+team-status promotion    # promotion pillar progress
+team-status 1on1         # 1:1 note history
+```
+
+| File | Purpose |
+|------|---------|
+| `team/promotion-tracker.yml` | Track evidence against 5 promotion pillars: delivery, people, BD, thought leadership, operations |
+| `team/roster.yml` | Team skills matrix (1-5 ratings), capacity, development goals, certifications |
+| `team/engagements/` | Per-client: budget burn rate, deliverables, risks, stakeholders, scope changes |
+| `team/one-on-ones/` | Per-person 1:1 notes — your memory for reviews and promotions |
+| `team/weekly-status/` | Friday status report template (RAG, budget, risks, BD pipeline) |
+| `team/personal/first-90-days.md` | 90-day acceleration plan with weekly habits |
 
 ---
 

@@ -130,13 +130,22 @@ Creates in the target project:
 - `agents/sdlc.md` — SDLC agent instructions
 - `agents/artifacts.md` — artifact storage rules
 - `.artifacts/` — output directories
-- `CLAUDE.md` — AI agent project instructions
-- `.cursorrules` — Cursor agent instructions
 - `Makefile` — standard targets (lint, fmt, test + dbt targets if applicable)
 - `.sqlfluff` — SQL linter config (for SQL/dbt projects)
 - `.envrc` + `.env.template` — environment management
 - `.pre-commit-config.yaml` — git hooks
 - `sqlprism.yml` — SQL indexing config (for SQL/dbt projects)
+- AI tool instruction files (all point to the same `agents/` directory):
+
+| File | Tool |
+|------|------|
+| `CLAUDE.md` | Claude Code |
+| `.cursorrules` | Cursor |
+| `.cursor/rules/agents.mdc` | Cursor v2 |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+| `.windsurfrules` | Windsurf |
+| `.clinerules` | Cline |
+| `AGENTS.md` | OpenAI Codex |
 
 ### `sqlprism-init` — Set up sqlprism in any SQL project
 
@@ -329,7 +338,7 @@ All aliases are loaded automatically via `shell/rc.sh`.
 
 ## AI Agent System
 
-When you run `scaffold .` in a project, it sets up three agents:
+When you run `scaffold .` in a project, it sets up three agents and generates instruction files for **every major AI coding tool** — Claude Code, Cursor, GitHub Copilot, Windsurf, Cline, and OpenAI Codex. All point to the same `agents/` directory, so your team can use different tools and still follow the same workflow.
 
 ### Research Agent (`agents/research.md`)
 

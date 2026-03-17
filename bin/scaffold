@@ -158,17 +158,75 @@ else
     skip "CLAUDE.md"
 fi
 
-# ── 5. .cursorrules (mirrors CLAUDE.md intent) ──
+# ── 5. AI tool instruction files (all point to agents/) ──
+step "Setting up AI tool instructions..."
+
+# Shared instruction block used by all non-CLAUDE.md tools
+AGENT_INSTRUCTIONS='Read the following files before starting any work:
+
+- `agents/config.yaml` — paths, connections, and behavior settings
+- `agents/research.md` — research workflow (Socratic/first-principles decomposition)
+- `agents/sdlc.md` — development lifecycle (issue → task list → parallel execution → commit → PR)
+- `agents/artifacts.md` — where to store all generated files
+
+## Workflow Rules
+
+1. For research/exploration: follow `agents/research.md`
+2. For implementation: follow `agents/sdlc.md`
+3. Save all outputs per `agents/config.yaml` paths
+4. Run `make lint` before every commit
+5. Run `make test` before marking tasks complete
+6. Commit after every completed task, not at the end
+7. Never push to main directly — use feature branches'
+
+# Cursor
 if [[ ! -f ".cursorrules" ]]; then
-    cat > .cursorrules <<'CURSOR'
-Read CLAUDE.md and agents/ directory for full project instructions.
-Follow agents/sdlc.md for implementation tasks.
-Follow agents/research.md for research tasks.
-Save all artifacts per agents/config.yaml paths.
-CURSOR
-    info "Created .cursorrules"
+    echo "$AGENT_INSTRUCTIONS" > .cursorrules
+    info "Created .cursorrules (Cursor)"
 else
     skip ".cursorrules"
+fi
+
+# Cursor (new format)
+if [[ ! -d ".cursor/rules" ]]; then
+    mkdir -p .cursor/rules
+    echo "$AGENT_INSTRUCTIONS" > .cursor/rules/agents.mdc
+    info "Created .cursor/rules/agents.mdc (Cursor v2)"
+else
+    skip ".cursor/rules/"
+fi
+
+# GitHub Copilot
+if [[ ! -f ".github/copilot-instructions.md" ]]; then
+    mkdir -p .github
+    echo "$AGENT_INSTRUCTIONS" > .github/copilot-instructions.md
+    info "Created .github/copilot-instructions.md (Copilot)"
+else
+    skip ".github/copilot-instructions.md"
+fi
+
+# Windsurf
+if [[ ! -f ".windsurfrules" ]]; then
+    echo "$AGENT_INSTRUCTIONS" > .windsurfrules
+    info "Created .windsurfrules (Windsurf)"
+else
+    skip ".windsurfrules"
+fi
+
+# Cline
+if [[ ! -f ".clinerules" ]]; then
+    echo "$AGENT_INSTRUCTIONS" > .clinerules
+    info "Created .clinerules (Cline)"
+else
+    skip ".clinerules"
+fi
+
+# OpenAI Codex
+if [[ ! -f "AGENTS.md" ]]; then
+    echo "$AGENT_INSTRUCTIONS" > AGENTS.md
+    info "Created AGENTS.md (Codex)"
+else
+    skip "AGENTS.md"
 fi
 
 # ── 6. Standard Makefile targets (append if Makefile exists, create if not) ──
@@ -391,8 +449,13 @@ echo "    agents/research.md       ← research agent instructions"
 echo "    agents/sdlc.md           ← SDLC agent instructions"
 echo "    agents/artifacts.md      ← artifact storage rules"
 echo "    .artifacts/              ← output directories"
-echo "    CLAUDE.md                ← AI agent project instructions"
-echo "    .cursorrules             ← Cursor agent instructions"
+echo "    CLAUDE.md                ← Claude Code instructions"
+echo "    .cursorrules             ← Cursor instructions"
+echo "    .cursor/rules/agents.mdc ← Cursor v2 instructions"
+echo "    .github/copilot-*        ← GitHub Copilot instructions"
+echo "    .windsurfrules           ← Windsurf instructions"
+echo "    .clinerules              ← Cline instructions"
+echo "    AGENTS.md                ← OpenAI Codex instructions"
 echo "    Makefile                 ← standard targets (lint/fmt/test)"
 echo "    .envrc + .env.template   ← environment management (direnv)"
 ($HAS_SQL || $HAS_DBT) && echo "    .sqlfluff                ← SQL linter config"

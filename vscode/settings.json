@@ -1,0 +1,28 @@
+{
+    "workbench.colorTheme": "Catppuccin Mocha",
+    "workbench.iconTheme": "catppuccin-mocha",
+    "editor.fontFamily": "'JetBrains Mono', 'Fira Code', monospace",
+    "editor.fontSize": 14,
+    "editor.lineHeight": 1.6,
+    "editor.fontLigatures": true,
+    "editor.minimap.enabled": false,
+    "editor.cursorBlinking": "smooth",
+    "editor.smoothScrolling": true,
+    "editor.formatOnSave": true,
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": "active",
+    "editor.tabSize": 4,
+    "editor.renderWhitespace": "trailing",
+    "terminal.integrated.fontFamily": "'JetBrains Mono'",
+    "terminal.integrated.fontSize": 13,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    }
+}

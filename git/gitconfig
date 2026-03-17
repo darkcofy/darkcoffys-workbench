@@ -1,0 +1,91 @@
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: git config
+# ──────────────────────────────────────────────
+# Included via: git config --global include.path <path>/git/gitconfig
+# This does NOT override your user.name/user.email — set those per-machine.
+
+[core]
+    editor = nvim
+    pager = less -FRX
+    autocrlf = input
+    whitespace = trailing-space,space-before-tab
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[push]
+    autoSetupRemote = true
+    default = current
+
+[fetch]
+    prune = true
+
+[merge]
+    conflictstyle = zdiff3
+    tool = nvim
+
+[diff]
+    algorithm = histogram
+    colorMoved = default
+
+[rebase]
+    autoStash = true
+
+[rerere]
+    enabled = true
+
+[column]
+    ui = auto
+
+[branch]
+    sort = -committerdate
+
+[alias]
+    # ── Status / log ──
+    s       = status -sb
+    l       = log --oneline --graph --decorate -20
+    la      = log --oneline --graph --decorate --all -30
+    ll      = log --stat --decorate -5
+    last    = log -1 --stat
+
+    # ── Branching ──
+    co      = checkout
+    cb      = checkout -b
+    br      = branch --sort=-committerdate --format='%(color:yellow)%(refname:short)%(color:reset) %(color:dim)%(committerdate:relative)%(color:reset)'
+    gone    = "!git branch -vv | grep ': gone]' | awk '{print $1}'"
+    prune-gone = "!git gone | xargs -r git branch -D"
+
+    # ── Staging / committing ──
+    a       = add
+    ap      = add -p
+    cm      = commit -m
+    ca      = commit --amend
+    can     = commit --amend --no-edit
+
+    # ── Undo (safe) ──
+    undo    = reset --soft HEAD~1
+    unstage = reset HEAD --
+
+    # ── Working with remotes ──
+    p       = push
+    pf      = push --force-with-lease
+    pl      = pull
+    sync    = "!git fetch --all --prune && git rebase origin/$(git branch --show-current)"
+
+    # ── Stash ──
+    ss      = stash push -m
+    sp      = stash pop
+    sl      = stash list
+
+    # ── Diff ──
+    d       = diff
+    ds      = diff --staged
+    dw      = diff --word-diff
+
+    # ── Utility ──
+    whoami  = "!echo \"$(git config user.name) <$(git config user.email)>\""
+    root    = rev-parse --show-toplevel
+    aliases = config --get-regexp ^alias\\.

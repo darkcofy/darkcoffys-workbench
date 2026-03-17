@@ -1,0 +1,44 @@
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: Starship prompt
+# ──────────────────────────────────────────────
+# Minimal, fast prompt — shows only what matters
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$python\
+$rust\
+$nodejs\
+$character"""
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+
+[directory]
+truncation_length = 3
+truncation_symbol = "…/"
+style = "bold blue"
+
+[git_branch]
+format = " [$branch]($style) "
+style = "bold purple"
+
+[git_status]
+format = "[$all_status$ahead_behind]($style)"
+style = "bold yellow"
+
+[python]
+format = " [py $version]($style)"
+style = "dim green"
+detect_files = ["pyproject.toml", "requirements.txt", ".python-version"]
+
+[rust]
+format = " [rs $version]($style)"
+style = "dim red"
+
+[nodejs]
+format = " [node $version]($style)"
+style = "dim green"
+detect_files = ["package.json"]

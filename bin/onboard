@@ -1,0 +1,232 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: repo onboarding
+# ──────────────────────────────────────────────
+# Clone a repo (or use current dir) and set up
+# the dev environment automatically.
+#
+# Usage:
+#   onboard <git-url>          Clone + setup
+#   onboard <git-url> <dir>    Clone into <dir> + setup
+#   onboard .                  Setup current directory
+# ──────────────────────────────────────────────
+
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+DIM='\033[2m'
+RED='\033[0;31m'
+RESET='\033[0m'
+
+info()  { echo -e "${GREEN}  ✓ $*${RESET}"; }
+warn()  { echo -e "${YELLOW}  → $*${RESET}"; }
+step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
+err()   { echo -e "${RED}  ✗ $*${RESET}"; }
+
+# ── Parse args ──
+TARGET="${1:-.}"
+DEST="${2:-}"
+
+echo ""
+echo -e "  ${CYAN}darkcoffys onboard${RESET}"
+echo "  ══════════════════"
+echo ""
+
+# ── Clone if URL provided ──
+if [[ "$TARGET" != "." ]]; then
+    if [[ -z "$DEST" ]]; then
+        # Extract repo name from URL
+        DEST="$(basename "$TARGET" .git)"
+    fi
+
+    if [[ -d "$DEST" ]]; then
+        warn "Directory $DEST already exists, using it"
+    else
+        step "Cloning $TARGET → $DEST"
+        git clone "$TARGET" "$DEST"
+        info "Cloned"
+    fi
+    cd "$DEST"
+else
+    if [[ ! -d ".git" ]]; then
+        err "Not a git repo. Pass a URL or run from inside a repo."
+        exit 1
+    fi
+    DEST="$(basename "$PWD")"
+    warn "Onboarding current directory: $DEST"
+fi
+
+echo ""
+
+# ── Detect and report what we found ──
+step "Scanning project..."
+
+HAS_PYTHON=false
+HAS_SQL=false
+HAS_MAKE=false
+HAS_JUST=false
+HAS_PRECOMMIT=false
+HAS_DOCKER=false
+
+[[ -f "pyproject.toml" || -f "setup.py" || -f "setup.cfg" || -f "requirements.txt" ]] && HAS_PYTHON=true
+find . -maxdepth 3 -name "*.sql" -print -quit 2>/dev/null | grep -q . && HAS_SQL=true
+[[ -f "Makefile" || -f "makefile" || -f "GNUmakefile" ]] && HAS_MAKE=true
+[[ -f "justfile" || -f "Justfile" ]] && HAS_JUST=true
+[[ -f ".pre-commit-config.yaml" ]] && HAS_PRECOMMIT=true
+[[ -f "docker-compose.yml" || -f "docker-compose.yaml" || -f "compose.yml" || -f "compose.yaml" ]] && HAS_DOCKER=true
+
+echo ""
+echo "  Detected:"
+$HAS_PYTHON     && echo -e "    ${GREEN}● Python${RESET}"
+$HAS_SQL        && echo -e "    ${GREEN}● SQL${RESET}"
+$HAS_MAKE       && echo -e "    ${GREEN}● Makefile${RESET}"
+$HAS_JUST       && echo -e "    ${GREEN}● Justfile${RESET}"
+$HAS_PRECOMMIT  && echo -e "    ${GREEN}● pre-commit${RESET}"
+$HAS_DOCKER     && echo -e "    ${GREEN}● Docker Compose${RESET}"
+echo ""
+
+# ── Python setup ──
+if $HAS_PYTHON; then
+    step "Setting up Python environment..."
+
+    # Prefer uv, fall back to python -m venv + pip
+    if command -v uv &>/dev/null; then
+        # uv-based setup
+        if [[ -f "pyproject.toml" ]]; then
+            # Check if it's a uv project (has [tool.uv] or [project] with uv)
+            if grep -q '\[tool\.uv\]' pyproject.toml 2>/dev/null || grep -q '\[project\]' pyproject.toml 2>/dev/null; then
+                step "Running uv sync..."
+                uv sync
+                info "Dependencies installed via uv sync"
+            else
+                step "Creating venv + installing from pyproject.toml..."
+                uv venv
+                uv pip install -e ".[dev]" 2>/dev/null || uv pip install -e "." 2>/dev/null || uv pip install -r <(uv pip compile pyproject.toml 2>/dev/null) || true
+                info "Installed from pyproject.toml"
+            fi
+        elif [[ -f "requirements.txt" ]]; then
+            step "Creating venv + installing requirements.txt..."
+            uv venv
+            uv pip install -r requirements.txt
+            [[ -f "requirements-dev.txt" ]] && uv pip install -r requirements-dev.txt
+            info "Installed from requirements.txt"
+        elif [[ -f "setup.py" || -f "setup.cfg" ]]; then
+            step "Creating venv + installing package..."
+            uv venv
+            uv pip install -e ".[dev]" 2>/dev/null || uv pip install -e "."
+            info "Installed from setup.py/setup.cfg"
+        fi
+    else
+        # Fallback: standard venv + pip
+        warn "uv not found, using pip (run 'make python-tools' from workbench to install uv)"
+        if [[ ! -d ".venv" ]]; then
+            python3 -m venv .venv
+        fi
+        source .venv/bin/activate
+        pip install --upgrade pip -q
+
+        if [[ -f "pyproject.toml" ]]; then
+            pip install -e ".[dev]" 2>/dev/null || pip install -e "." 2>/dev/null || true
+        elif [[ -f "requirements.txt" ]]; then
+            pip install -r requirements.txt -q
+            [[ -f "requirements-dev.txt" ]] && pip install -r requirements-dev.txt -q
+        elif [[ -f "setup.py" || -f "setup.cfg" ]]; then
+            pip install -e ".[dev]" 2>/dev/null || pip install -e "." -q
+        fi
+        info "Dependencies installed via pip"
+    fi
+
+    # Install common dev tools into the venv if missing
+    step "Checking Python dev tools..."
+    VENV_PIP="pip"
+    command -v uv &>/dev/null && VENV_PIP="uv pip"
+
+    for tool in ruff pre-commit; do
+        if [[ -d ".venv" ]] && ! .venv/bin/python -m "$tool" --version &>/dev/null 2>&1; then
+            $VENV_PIP install "$tool" -q 2>/dev/null || true
+        fi
+    done
+    info "Python dev tools checked"
+fi
+
+# ── SQL detection ──
+if $HAS_SQL; then
+    SQL_COUNT=$(find . -maxdepth 5 -name "*.sql" 2>/dev/null | wc -l)
+    SQL_DIRS=$(find . -maxdepth 3 -name "*.sql" -printf '%h\n' 2>/dev/null | sort -u | head -5)
+    info "Found $SQL_COUNT SQL files"
+    if [[ -n "$SQL_DIRS" ]]; then
+        echo -e "    ${DIM}Locations:${RESET}"
+        echo "$SQL_DIRS" | while read -r d; do
+            echo -e "      ${DIM}$d/${RESET}"
+        done
+    fi
+fi
+
+# ── Pre-commit hooks ──
+if $HAS_PRECOMMIT; then
+    step "Installing pre-commit hooks..."
+    if command -v pre-commit &>/dev/null; then
+        pre-commit install --install-hooks -q 2>/dev/null || true
+        info "Pre-commit hooks installed"
+    elif [[ -d ".venv" ]] && .venv/bin/pre-commit --version &>/dev/null 2>&1; then
+        .venv/bin/pre-commit install --install-hooks -q 2>/dev/null || true
+        info "Pre-commit hooks installed (from venv)"
+    else
+        warn "pre-commit not found — install it to enable hooks"
+    fi
+fi
+
+# ── Show available Make/Just targets ──
+if $HAS_MAKE; then
+    echo ""
+    step "Makefile targets available:"
+    # Extract targets with comments, or just target names
+    if grep -qE '^[a-zA-Z_-]+:.*##' Makefile 2>/dev/null; then
+        grep -E '^[a-zA-Z_-]+:.*##' Makefile | head -15 | \
+            awk 'BEGIN {FS = ":.*?## "}; {printf "      \033[0;36m%-18s\033[0m %s\n", $1, $2}'
+    else
+        grep -E '^[a-zA-Z_-]+:' Makefile 2>/dev/null | head -15 | \
+            sed 's/:.*//' | awk '{printf "      \033[0;36m%s\033[0m\n", $1}'
+    fi
+fi
+
+if $HAS_JUST; then
+    echo ""
+    step "Justfile recipes available:"
+    just --list 2>/dev/null | head -15 | sed 's/^/      /'
+fi
+
+# ── Docker info ──
+if $HAS_DOCKER; then
+    echo ""
+    step "Docker Compose services:"
+    # Find the compose file
+    COMPOSE_FILE=""
+    for f in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do
+        [[ -f "$f" ]] && COMPOSE_FILE="$f" && break
+    done
+    if [[ -n "$COMPOSE_FILE" ]]; then
+        grep -E '^\s+\w+:$' "$COMPOSE_FILE" 2>/dev/null | sed 's/://;s/^/      /' | head -10
+        echo ""
+        warn "Start with: docker compose up -d"
+    fi
+fi
+
+# ── Summary ──
+echo ""
+echo "  ──────────────────────────────────────"
+echo -e "  ${GREEN}Onboarding complete: $DEST${RESET}"
+echo ""
+
+if $HAS_PYTHON; then
+    if command -v uv &>/dev/null && [[ -f "pyproject.toml" ]]; then
+        echo -e "  Activate env:  ${CYAN}source .venv/bin/activate${RESET}  (or uv handles it)"
+    elif [[ -d ".venv" ]]; then
+        echo -e "  Activate env:  ${CYAN}source .venv/bin/activate${RESET}"
+    fi
+fi
+
+echo -e "  Open editor:   ${CYAN}nvim .${RESET}  or  ${CYAN}code .${RESET}"
+echo ""

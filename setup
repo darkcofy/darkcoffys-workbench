@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────
+# darkcoffys-workbench setup
+# ──────────────────────────────────────────────
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODE="full"
+
+print_usage() {
+    cat <<'EOF'
+
+  darkcoffys-workbench setup
+  ══════════════════════════
+
+  Usage:
+    ./setup                  Full setup (WezTerm + VS Code + shell tools + neovim)
+    ./setup --low-power      Minimal setup (tmux + neovim + shell tools)
+    ./setup --lp             Same as --low-power
+    ./setup --uninstall      Remove all symlinks and configs
+
+  Modes:
+    full        WezTerm, VS Code extensions, Starship, zoxide, fzf, neovim
+    low-power   tmux, neovim, Starship, zoxide, fzf (no GUI needed)
+
+EOF
+}
+
+for arg in "$@"; do
+    case "$arg" in
+        --low-power|--lp|-lp) MODE="lowpower" ;;
+        --uninstall)          MODE="uninstall" ;;
+        --help|-h)            print_usage; exit 0 ;;
+        *)                    echo "Unknown flag: $arg"; print_usage; exit 1 ;;
+    esac
+done
+
+cd "$SCRIPT_DIR"
+
+case "$MODE" in
+    full)
+        echo ""
+        echo "  ☕ Full workbench setup"
+        echo ""
+        make deps-full
+        make python-tools
+        make shell-tools
+        make git-config
+        make nvim
+        make wezterm
+        make vscode
+        make onboard-link
+        echo ""
+        echo "  ✓ Full setup complete. Launch WezTerm and you're ready."
+        echo "  ✓ Run 'onboard <repo-url>' to bootstrap any project."
+        echo ""
+        ;;
+    lowpower)
+        echo ""
+        echo "  ⚡ Low-power workbench setup"
+        echo ""
+        make deps-lowpower
+        make python-tools
+        make shell-tools
+        make git-config
+        make nvim
+        make tmux
+        make onboard-link
+        echo ""
+        echo "  ✓ Low-power setup complete. Run: tmux → nvim"
+        echo "  ✓ Run 'onboard <repo-url>' to bootstrap any project."
+        echo ""
+        ;;
+    uninstall)
+        make uninstall
+        ;;
+esac

@@ -21,8 +21,12 @@ print_usage() {
     ./setup --uninstall      Remove all symlinks and configs
 
   Modes:
-    full        WezTerm, VS Code extensions, Starship, zoxide, fzf, neovim
-    low-power   tmux, neovim, Starship, zoxide, fzf (no GUI needed)
+    full        WezTerm, VS Code extensions, fonts, Docker, neovim, shell tools
+    low-power   tmux, neovim, shell tools (no GUI needed)
+
+  Both modes include:
+    Python toolchain (uv, ruff, pre-commit), git config, starship prompt,
+    zoxide, fzf, direnv, aliases, SSH key setup, CLI tools (onboard, scaffold)
 
 EOF
 }
@@ -44,16 +48,24 @@ case "$MODE" in
         echo "  ☕ Full workbench setup"
         echo ""
         make deps-full
+        make fonts
         make python-tools
         make shell-tools
+        make shell-rc
         make git-config
         make nvim
         make wezterm
         make vscode
         make onboard-link
+        make docker
         echo ""
-        echo "  ✓ Full setup complete. Launch WezTerm and you're ready."
-        echo "  ✓ Run 'onboard <repo-url>' to bootstrap any project."
+        echo "  ──────────────────────────────────────"
+        echo "  ✓ Full setup complete."
+        echo ""
+        echo "  Quick start:"
+        echo "    1. Open a new terminal (or: source ~/.zshrc)"
+        echo "    2. Run: ssh-setup           ← generate SSH key for GitHub"
+        echo "    3. Run: onboard <repo-url>  ← clone + setup any project"
         echo ""
         ;;
     lowpower)
@@ -63,13 +75,20 @@ case "$MODE" in
         make deps-lowpower
         make python-tools
         make shell-tools
+        make shell-rc
         make git-config
         make nvim
         make tmux
         make onboard-link
         echo ""
-        echo "  ✓ Low-power setup complete. Run: tmux → nvim"
-        echo "  ✓ Run 'onboard <repo-url>' to bootstrap any project."
+        echo "  ──────────────────────────────────────"
+        echo "  ✓ Low-power setup complete."
+        echo ""
+        echo "  Quick start:"
+        echo "    1. Open a new terminal (or: source ~/.bashrc)"
+        echo "    2. Run: ssh-setup           ← generate SSH key for GitHub"
+        echo "    3. Run: tmux → nvim         ← start editing"
+        echo "    4. Run: onboard <repo-url>  ← clone + setup any project"
         echo ""
         ;;
     uninstall)

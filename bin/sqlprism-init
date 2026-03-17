@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: sqlprism setup
+# ──────────────────────────────────────────────
+# Install sqlprism into any project and run index.
+#
+# Usage:
+#   sqlprism-init              Setup in current directory
+#   sqlprism-init /path/to/dir Setup in specified directory
+# ──────────────────────────────────────────────
+
+TARGET="${1:-.}"
+
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+DIM='\033[2m'
+RED='\033[0;31m'
+RESET='\033[0m'
+
+info()  { echo -e "${GREEN}  ✓ $*${RESET}"; }
+warn()  { echo -e "${YELLOW}  → $*${RESET}"; }
+step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
+err()   { echo -e "${RED}  ✗ $*${RESET}"; }
+
+cd "$TARGET"
+
+echo ""
+echo -e "  ${CYAN}darkcoffys sqlprism-init${RESET}"
+echo "  ══════════════════════"
+echo -e "  ${DIM}$(pwd)${RESET}"
+echo ""
+
+# ── Check for SQL files ──
+SQL_COUNT=$(find . -maxdepth 5 -name "*.sql" 2>/dev/null | wc -l)
+HAS_DBT=false
+[[ -f "dbt_project.yml" ]] && HAS_DBT=true
+
+if [[ "$SQL_COUNT" -eq 0 ]] && ! $HAS_DBT; then
+    warn "No SQL files or dbt_project.yml found."
+    warn "sqlprism works best with SQL-based projects."
+    read -rp "  Continue anyway? [y/N] " confirm
+    [[ "$confirm" != [yY] ]] && exit 0
+fi
+
+echo -e "  Found: ${GREEN}$SQL_COUNT SQL files${RESET}"
+$HAS_DBT && echo -e "  Found: ${GREEN}dbt project${RESET}"
+echo ""
+
+# ── Check if sqlprism is already available ──
+SQLPRISM_CMD=""
+
+if command -v sqlprism &>/dev/null; then
+    SQLPRISM_CMD="sqlprism"
+    info "sqlprism found in PATH ($(sqlprism --version 2>&1 || echo 'installed'))"
+elif command -v uv &>/dev/null; then
+    # Check if sqlprism is installed as a uv tool
+    if uv tool list 2>/dev/null | grep -q sqlprism; then
+        SQLPRISM_CMD="sqlprism"
+        info "sqlprism found as uv tool"
+    fi
+fi
+
+# ── Install if needed ──
+if [[ -z "$SQLPRISM_CMD" ]]; then
+    step "Installing sqlprism..."
+
+    if command -v uv &>/dev/null; then
+        # Install as uv tool (globally available)
+        uv tool install "git+https://github.com/darkcofy/sqlprism.git"
+        SQLPRISM_CMD="sqlprism"
+        info "Installed sqlprism via uv tool"
+    elif command -v pip &>/dev/null; then
+        pip install "git+https://github.com/darkcofy/sqlprism.git"
+        SQLPRISM_CMD="sqlprism"
+        info "Installed sqlprism via pip"
+    else
+        err "Neither uv nor pip found. Install uv first: make python-tools"
+        exit 1
+    fi
+fi
+
+# ── Initialize sqlprism config if not present ──
+if [[ ! -f "sqlprism.yml" ]] && [[ ! -f "sqlprism.json" ]]; then
+    step "Initializing sqlprism config..."
+    $SQLPRISM_CMD init --format yaml
+    info "Created sqlprism.yml"
+    echo ""
+    warn "Edit sqlprism.yml to configure your SQL repos/paths"
+else
+    skip() { echo -e "${DIM}  - $* (already exists, skipping)${RESET}"; }
+    skip "sqlprism config already exists"
+fi
+
+# ── Run reindex based on project type ──
+echo ""
+step "Running sqlprism reindex..."
+
+if $HAS_DBT; then
+    # dbt project — use dbt-specific reindex
+    DBT_PROJECT_NAME=$(grep -E '^name:' dbt_project.yml 2>/dev/null | head -1 | awk '{print $2}' | tr -d "'\"")
+    if [[ -n "$DBT_PROJECT_NAME" ]]; then
+        step "Detected dbt project: $DBT_PROJECT_NAME"
+        $SQLPRISM_CMD reindex-dbt \
+            --name "$DBT_PROJECT_NAME" \
+            --project . \
+            2>&1 || {
+                warn "dbt reindex failed — you may need to run 'dbt deps' first"
+                warn "Falling back to plain SQL reindex..."
+                $SQLPRISM_CMD reindex 2>&1 || true
+            }
+    else
+        warn "Could not parse dbt project name, using plain reindex"
+        $SQLPRISM_CMD reindex 2>&1 || true
+    fi
+else
+    # Plain SQL project
+    $SQLPRISM_CMD reindex 2>&1 || true
+fi
+
+info "sqlprism reindex complete"
+
+# ── Show status ──
+echo ""
+step "Index status:"
+$SQLPRISM_CMD status 2>&1 | sed 's/^/    /' || true
+
+# ── Summary ──
+echo ""
+echo "  ──────────────────────────────────────"
+echo -e "  ${GREEN}sqlprism is ready${RESET}"
+echo ""
+echo -e "  Useful commands:"
+echo -e "    ${CYAN}sqlprism status${RESET}              Check index"
+echo -e "    ${CYAN}sqlprism reindex${RESET}             Re-scan SQL files"
+echo -e "    ${CYAN}sqlprism reindex-file <f>${RESET}    Reindex single file (editor hook)"
+echo -e "    ${CYAN}sqlprism serve${RESET}               Start MCP server"
+echo ""

@@ -14,7 +14,7 @@ CYAN   := \033[0;36m
 DIM    := \033[2m
 RESET  := \033[0m
 
-.PHONY: help deps-lowpower deps-full shell-tools python-tools git-config tmux nvim wezterm vscode uninstall clean
+.PHONY: help deps-lowpower deps-full shell-tools shell-rc python-tools git-config fonts ssh-setup docker tmux nvim wezterm vscode onboard-link uninstall clean
 
 help: ## Show this help
 	@echo ""
@@ -37,17 +37,21 @@ help: ## Show this help
 deps-lowpower: ## Install minimal packages (tmux, neovim, CLI tools)
 	@echo -e "$(GREEN)Installing low-power packages...$(RESET)"
 ifeq ($(UNAME),Darwin)
-	brew install tmux neovim ripgrep fd fzf git curl
+	brew install tmux neovim ripgrep fd fzf git curl direnv bat eza
 else
 	sudo apt-get update && sudo apt-get install -y \
-		tmux neovim ripgrep fd-find fzf git curl unzip
+		tmux neovim ripgrep fd-find fzf git curl unzip direnv bat
+	@# eza (not in older apt repos — install from cargo if missing)
+	@if ! command -v eza &>/dev/null; then \
+		echo -e "$(DIM)  eza not in apt, will be available after cargo tools$(RESET)"; \
+	fi
 endif
 
 deps-full: ## Install full packages (WezTerm, neovim, CLI tools)
 	@echo -e "$(GREEN)Installing full packages...$(RESET)"
 ifeq ($(UNAME),Darwin)
 	brew install --cask wezterm
-	brew install neovim ripgrep fd fzf git curl
+	brew install neovim ripgrep fd fzf git curl direnv bat eza
 else
 	@if ! command -v wezterm &>/dev/null; then \
 		echo -e "$(YELLOW)Installing WezTerm...$(RESET)"; \
@@ -56,7 +60,7 @@ else
 		sudo apt-get update; \
 	fi
 	sudo apt-get install -y \
-		wezterm neovim ripgrep fd-find fzf git curl unzip
+		wezterm neovim ripgrep fd-find fzf git curl unzip direnv bat
 endif
 
 # ═══════════════════════════════════════════════
@@ -87,9 +91,27 @@ endif
 	@echo -e "$(YELLOW)  Linking shell config...$(RESET)"
 	@mkdir -p $(XDG_CONFIG_HOME)/starship
 	@ln -sf $(CURDIR)/starship/starship.toml $(XDG_CONFIG_HOME)/starship.toml
-	@echo -e "$(GREEN)  Shell tools ready. Add to your rc file:$(RESET)"
-	@echo -e "$(CYAN)    eval \"\$$(starship init bash)\"  # or zsh$(RESET)"
-	@echo -e "$(CYAN)    eval \"\$$(zoxide init bash)\"    # or zsh$(RESET)"
+	@echo -e "$(GREEN)  Shell tools ready (wired up by 'make shell-rc').$(RESET)"
+
+shell-rc: ## Wire up shell (starship, zoxide, direnv, fzf, aliases) in your rc file
+	@echo -e "$(YELLOW)Setting up shell rc...$(RESET)"
+	@# Detect user's shell rc file
+	@RCFILE=""; \
+	if [ -n "$$ZSH_VERSION" ] || [ "$$(basename $$SHELL)" = "zsh" ]; then \
+		RCFILE="$(HOME)/.zshrc"; \
+	else \
+		RCFILE="$(HOME)/.bashrc"; \
+	fi; \
+	touch "$$RCFILE"; \
+	if grep -q "darkcoffys-workbench" "$$RCFILE" 2>/dev/null; then \
+		echo -e "$(DIM)  Already sourced in $$RCFILE$(RESET)"; \
+	else \
+		echo "" >> "$$RCFILE"; \
+		echo "# darkcoffys-workbench (starship, zoxide, direnv, fzf, aliases)" >> "$$RCFILE"; \
+		echo "[ -f $(CURDIR)/shell/rc.sh ] && source $(CURDIR)/shell/rc.sh" >> "$$RCFILE"; \
+		echo -e "$(GREEN)  Added source line to $$RCFILE$(RESET)"; \
+		echo -e "$(CYAN)  Run: source $$RCFILE  (or open a new terminal)$(RESET)"; \
+	fi
 
 # ═══════════════════════════════════════════════
 # Python toolchain
@@ -144,13 +166,14 @@ git-config: ## Link git aliases and defaults (does NOT touch user.name/email)
 # Onboard tool
 # ═══════════════════════════════════════════════
 
-onboard-link: ## Add 'onboard' command to PATH
-	@echo -e "$(YELLOW)Linking onboard tool...$(RESET)"
+onboard-link: ## Add CLI tools to PATH (~/.local/bin)
+	@echo -e "$(YELLOW)Linking CLI tools...$(RESET)"
 	@mkdir -p $(HOME)/.local/bin
-	@ln -sf $(CURDIR)/bin/onboard $(HOME)/.local/bin/onboard
-	@chmod +x $(CURDIR)/bin/onboard
-	@echo -e "$(GREEN)  onboard → ~/.local/bin/onboard$(RESET)"
-	@echo -e "$(DIM)  Ensure ~/.local/bin is in your PATH$(RESET)"
+	@for cmd in onboard scaffold sqlprism-init ssh-setup install-fonts; do \
+		ln -sf $(CURDIR)/bin/$$cmd $(HOME)/.local/bin/$$cmd; \
+		chmod +x $(CURDIR)/bin/$$cmd; \
+		echo -e "$(GREEN)  $$cmd → ~/.local/bin/$$cmd$(RESET)"; \
+	done
 
 # ═══════════════════════════════════════════════
 # Config symlinks
@@ -190,10 +213,36 @@ vscode: ## Install VS Code extensions (full mode)
 	fi
 
 # ═══════════════════════════════════════════════
+# Machine setup
+# ═══════════════════════════════════════════════
+
+fonts: ## Install JetBrains Mono Nerd Font
+	@$(CURDIR)/bin/install-fonts
+
+ssh-setup: ## Generate SSH key and print public key
+	@$(CURDIR)/bin/ssh-setup
+
+docker: ## Install Docker + Docker Compose
+	@echo -e "$(GREEN)Setting up Docker...$(RESET)"
+ifeq ($(UNAME),Darwin)
+	@echo -e "$(YELLOW)  Install Docker Desktop from https://docker.com/products/docker-desktop$(RESET)"
+else
+	@if ! command -v docker &>/dev/null; then \
+		echo -e "$(YELLOW)  Installing Docker...$(RESET)"; \
+		curl -fsSL https://get.docker.com | sh; \
+		sudo usermod -aG docker $$USER; \
+		echo -e "$(GREEN)  Docker installed$(RESET)"; \
+		echo -e "$(YELLOW)  Log out and back in for group changes to take effect$(RESET)"; \
+	else \
+		echo -e "$(DIM)  Docker already installed ($$(docker --version))$(RESET)"; \
+	fi
+endif
+
+# ═══════════════════════════════════════════════
 # Cleanup
 # ═══════════════════════════════════════════════
 
-uninstall: ## Remove all symlinks
+uninstall: ## Remove all symlinks and shell integration
 	@echo -e "$(YELLOW)Removing symlinks...$(RESET)"
 	@rm -f $(HOME)/.tmux.conf
 	@rm -f $(HOME)/.wezterm.lua
@@ -202,8 +251,11 @@ uninstall: ## Remove all symlinks
 	@rm -f $(XDG_CONFIG_HOME)/starship.toml
 	@rm -f $(XDG_CONFIG_HOME)/Code/User/settings.json
 	@rm -f $(XDG_CONFIG_HOME)/Code/User/keybindings.json
-	@rm -f $(HOME)/.local/bin/onboard
+	@for cmd in onboard scaffold sqlprism-init ssh-setup install-fonts; do \
+		rm -f $(HOME)/.local/bin/$$cmd; \
+	done
 	@git config --global --unset include.path 2>/dev/null || true
+	@echo -e "$(YELLOW)  Note: shell rc.sh source line left in your rc file (remove manually if wanted)$(RESET)"
 	@echo -e "$(GREEN)  All symlinks removed.$(RESET)"
 
 clean: uninstall ## Alias for uninstall

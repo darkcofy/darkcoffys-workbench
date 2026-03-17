@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: SSH key setup
+# ──────────────────────────────────────────────
+# Generate an SSH key and print the public key
+# for pasting into GitHub/GitLab/Bitbucket.
+#
+# Usage:
+#   ssh-setup                     Uses git user.email
+#   ssh-setup your@email.com      Specify email
+# ──────────────────────────────────────────────
+
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+info()  { echo -e "${GREEN}  ✓ $*${RESET}"; }
+warn()  { echo -e "${YELLOW}  → $*${RESET}"; }
+step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
+
+echo ""
+echo -e "  ${CYAN}darkcoffys ssh-setup${RESET}"
+echo "  ═══════════════════"
+echo ""
+
+# ── Determine email ──
+EMAIL="${1:-}"
+if [[ -z "$EMAIL" ]]; then
+    EMAIL="$(git config --global user.email 2>/dev/null || echo "")"
+fi
+
+if [[ -z "$EMAIL" ]]; then
+    echo -n "  Enter your email: "
+    read -r EMAIL
+fi
+
+KEY_FILE="$HOME/.ssh/id_ed25519"
+
+# ── Check for existing key ──
+if [[ -f "$KEY_FILE" ]]; then
+    warn "Key already exists: $KEY_FILE"
+    echo ""
+    echo -e "  ${CYAN}Your public key:${RESET}"
+    echo ""
+    cat "${KEY_FILE}.pub"
+    echo ""
+
+    # Check if ssh-agent has it
+    if ! ssh-add -l 2>/dev/null | grep -q ed25519; then
+        step "Adding to ssh-agent..."
+        eval "$(ssh-agent -s)" >/dev/null 2>&1
+        ssh-add "$KEY_FILE" 2>/dev/null
+        info "Key added to agent"
+    fi
+
+    echo -e "  ${DIM}Paste the key above into:${RESET}"
+    echo -e "    ${CYAN}GitHub:${RESET}    Settings → SSH and GPG keys → New SSH key"
+    echo -e "    ${CYAN}GitLab:${RESET}    Preferences → SSH Keys"
+    echo ""
+    exit 0
+fi
+
+# ── Generate new key ──
+step "Generating ed25519 SSH key for $EMAIL..."
+
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+ssh-keygen -t ed25519 -C "$EMAIL" -f "$KEY_FILE" -N ""
+
+info "Key generated: $KEY_FILE"
+
+# ── Start ssh-agent and add key ──
+step "Adding to ssh-agent..."
+eval "$(ssh-agent -s)" >/dev/null 2>&1
+ssh-add "$KEY_FILE" 2>/dev/null
+info "Key added to agent"
+
+# ── Ensure agent starts on login ──
+SSH_RC_SNIPPET='# SSH agent (added by darkcoffys-workbench)
+if [ -z "$SSH_AUTH_SOCK" ]; then
+    eval "$(ssh-agent -s)" >/dev/null 2>&1
+    ssh-add ~/.ssh/id_ed25519 2>/dev/null
+fi'
+
+for rcfile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [[ -f "$rcfile" ]] && ! grep -q "darkcoffys-workbench" "$rcfile" 2>/dev/null; then
+        echo "" >> "$rcfile"
+        echo "$SSH_RC_SNIPPET" >> "$rcfile"
+    fi
+done
+
+# ── Display public key ──
+echo ""
+echo -e "  ${CYAN}Your public key (copied to clipboard if possible):${RESET}"
+echo ""
+cat "${KEY_FILE}.pub"
+echo ""
+
+# Try to copy to clipboard
+if command -v pbcopy &>/dev/null; then
+    cat "${KEY_FILE}.pub" | pbcopy
+    info "Copied to clipboard (pbcopy)"
+elif command -v xclip &>/dev/null; then
+    cat "${KEY_FILE}.pub" | xclip -selection clipboard
+    info "Copied to clipboard (xclip)"
+elif command -v wl-copy &>/dev/null; then
+    cat "${KEY_FILE}.pub" | wl-copy
+    info "Copied to clipboard (wl-copy)"
+else
+    warn "Install xclip or wl-copy to auto-copy, or copy manually above"
+fi
+
+echo ""
+echo -e "  ${YELLOW}Paste into:${RESET}"
+echo -e "    ${CYAN}GitHub:${RESET}    Settings → SSH and GPG keys → New SSH key"
+echo -e "    ${CYAN}GitLab:${RESET}    Preferences → SSH Keys"
+echo ""
+
+# ── Test GitHub connectivity ──
+echo -n "  Test GitHub SSH connection? [Y/n] "
+read -r confirm
+if [[ "$confirm" != [nN] ]]; then
+    echo ""
+    ssh -T git@github.com 2>&1 | sed 's/^/    /' || true
+    echo ""
+fi

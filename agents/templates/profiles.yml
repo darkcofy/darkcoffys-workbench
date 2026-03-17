@@ -1,0 +1,48 @@
+# ──────────────────────────────────────────────
+# dbt profiles template
+# ──────────────────────────────────────────────
+# Place in project root with DBT_PROFILES_DIR=. in .env
+# Or copy to ~/.dbt/profiles.yml
+
+my_project:  # ← replace with your dbt project name
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DB_HOST', 'localhost') }}"
+      port: "{{ env_var('DB_PORT', '5432') | int }}"
+      user: "{{ env_var('DB_USER') }}"
+      password: "{{ env_var('DB_PASSWORD') }}"
+      dbname: "{{ env_var('DB_NAME') }}"
+      schema: dev
+      threads: 4
+
+    # prod:
+    #   type: postgres
+    #   host: "{{ env_var('DB_HOST') }}"
+    #   port: "{{ env_var('DB_PORT', '5432') | int }}"
+    #   user: "{{ env_var('DB_USER') }}"
+    #   password: "{{ env_var('DB_PASSWORD') }}"
+    #   dbname: "{{ env_var('DB_NAME') }}"
+    #   schema: public
+    #   threads: 8
+
+    # snowflake_dev:
+    #   type: snowflake
+    #   account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+    #   user: "{{ env_var('SNOWFLAKE_USER') }}"
+    #   password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+    #   role: "{{ env_var('SNOWFLAKE_ROLE') }}"
+    #   warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
+    #   database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+    #   schema: dev
+    #   threads: 4
+
+    # bigquery_dev:
+    #   type: bigquery
+    #   method: service-account
+    #   project: "{{ env_var('GCP_PROJECT') }}"
+    #   keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+    #   dataset: dev
+    #   threads: 4
+    #   location: US

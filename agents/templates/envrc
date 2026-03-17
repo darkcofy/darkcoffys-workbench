@@ -1,0 +1,9 @@
+# Auto-load .env and activate venv via direnv
+# Install direnv: https://direnv.net/docs/installation.html
+
+dotenv_if_exists
+
+# Auto-activate Python venv
+if [ -d ".venv" ]; then
+    source .venv/bin/activate
+fi

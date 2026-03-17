@@ -1,10 +1,11 @@
 ms-python.python
 ms-python.vscode-pylance
 charliermarsh.ruff
-rust-lang.rust-analyzer
 catppuccin.catppuccin-vsc
 catppuccin.catppuccin-vsc-icons
 vscodevim.vim
 eamodio.gitlens
 esbenp.prettier-vscode
-bradlc.vscode-tailwindcss
+innoverio.vscode-dbt-power-user
+dorzey.vscode-sqlfluff
+mtxr.sqltools

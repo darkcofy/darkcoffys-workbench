@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: font installer
+# ──────────────────────────────────────────────
+# Installs JetBrains Mono Nerd Font (used by
+# WezTerm, neovim, terminal configs)
+# ──────────────────────────────────────────────
+
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+info()  { echo -e "${GREEN}  ✓ $*${RESET}"; }
+warn()  { echo -e "${YELLOW}  → $*${RESET}"; }
+step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
+
+UNAME="$(uname -s)"
+FONT_NAME="JetBrainsMono"
+NERD_FONT_VERSION="v3.3.0"
+
+echo ""
+echo -e "  ${CYAN}darkcoffys install-fonts${RESET}"
+echo "  ═══════════════════════"
+echo ""
+
+# ── Check if already installed ──
+FONT_INSTALLED=false
+
+if [[ "$UNAME" == "Darwin" ]]; then
+    FONT_DIR="$HOME/Library/Fonts"
+    fc-list 2>/dev/null | grep -qi "JetBrains" && FONT_INSTALLED=true
+else
+    FONT_DIR="$HOME/.local/share/fonts"
+    fc-list 2>/dev/null | grep -qi "JetBrains" && FONT_INSTALLED=true
+fi
+
+if $FONT_INSTALLED; then
+    info "JetBrains Mono already installed"
+    echo -e "  ${DIM}$(fc-list | grep -i 'JetBrains' | head -3)${RESET}"
+    echo ""
+    exit 0
+fi
+
+# ── Download and install ──
+step "Downloading JetBrains Mono Nerd Font ${NERD_FONT_VERSION}..."
+
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+curl -fsSL -o "$TMPDIR/$FONT_NAME.zip" \
+    "https://github.com/ryanoasis/nerd-fonts/releases/download/${NERD_FONT_VERSION}/${FONT_NAME}.zip"
+
+info "Downloaded"
+
+step "Installing to $FONT_DIR..."
+mkdir -p "$FONT_DIR"
+unzip -oq "$TMPDIR/$FONT_NAME.zip" -d "$FONT_DIR/" -x "*.txt" -x "*.md" -x "LICENSE*"
+
+# ── Rebuild font cache ──
+if command -v fc-cache &>/dev/null; then
+    step "Rebuilding font cache..."
+    fc-cache -f "$FONT_DIR"
+fi
+
+info "JetBrains Mono Nerd Font installed"
+echo ""
+echo -e "  ${DIM}Restart your terminal/WezTerm to pick up the new font.${RESET}"
+echo ""

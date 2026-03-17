@@ -8,10 +8,14 @@ set -euo pipefail
 # the dev environment automatically.
 #
 # Usage:
-#   onboard <git-url>          Clone + setup
-#   onboard <git-url> <dir>    Clone into <dir> + setup
-#   onboard .                  Setup current directory
+#   onboard <git-url>              Clone + setup
+#   onboard <git-url> <dir>        Clone into <dir> + setup
+#   onboard .                      Setup current directory
+#   onboard <git-url> --scaffold   Clone + setup + scaffold agent configs
+#   onboard . --scaffold           Setup + scaffold current directory
 # ──────────────────────────────────────────────
+
+WORKBENCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -26,8 +30,23 @@ step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
 err()   { echo -e "${RED}  ✗ $*${RESET}"; }
 
 # ── Parse args ──
-TARGET="${1:-.}"
-DEST="${2:-}"
+TARGET=""
+DEST=""
+DO_SCAFFOLD=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --scaffold|-s) DO_SCAFFOLD=true ;;
+        *)
+            if [[ -z "$TARGET" ]]; then
+                TARGET="$arg"
+            else
+                DEST="$arg"
+            fi
+            ;;
+    esac
+done
+TARGET="${TARGET:-.}"
 
 echo ""
 echo -e "  ${CYAN}darkcoffys onboard${RESET}"
@@ -65,26 +84,32 @@ step "Scanning project..."
 
 HAS_PYTHON=false
 HAS_SQL=false
+HAS_DBT=false
 HAS_MAKE=false
 HAS_JUST=false
 HAS_PRECOMMIT=false
 HAS_DOCKER=false
+HAS_ENVRC=false
 
 [[ -f "pyproject.toml" || -f "setup.py" || -f "setup.cfg" || -f "requirements.txt" ]] && HAS_PYTHON=true
 find . -maxdepth 3 -name "*.sql" -print -quit 2>/dev/null | grep -q . && HAS_SQL=true
+[[ -f "dbt_project.yml" ]] && HAS_DBT=true
 [[ -f "Makefile" || -f "makefile" || -f "GNUmakefile" ]] && HAS_MAKE=true
 [[ -f "justfile" || -f "Justfile" ]] && HAS_JUST=true
 [[ -f ".pre-commit-config.yaml" ]] && HAS_PRECOMMIT=true
 [[ -f "docker-compose.yml" || -f "docker-compose.yaml" || -f "compose.yml" || -f "compose.yaml" ]] && HAS_DOCKER=true
+[[ -f ".envrc" ]] && HAS_ENVRC=true
 
 echo ""
 echo "  Detected:"
 $HAS_PYTHON     && echo -e "    ${GREEN}● Python${RESET}"
 $HAS_SQL        && echo -e "    ${GREEN}● SQL${RESET}"
+$HAS_DBT        && echo -e "    ${GREEN}● dbt project${RESET}"
 $HAS_MAKE       && echo -e "    ${GREEN}● Makefile${RESET}"
 $HAS_JUST       && echo -e "    ${GREEN}● Justfile${RESET}"
 $HAS_PRECOMMIT  && echo -e "    ${GREEN}● pre-commit${RESET}"
 $HAS_DOCKER     && echo -e "    ${GREEN}● Docker Compose${RESET}"
+$HAS_ENVRC      && echo -e "    ${GREEN}● direnv${RESET}"
 echo ""
 
 # ── Python setup ──
@@ -151,6 +176,34 @@ if $HAS_PYTHON; then
     info "Python dev tools checked"
 fi
 
+# ── dbt setup ──
+if $HAS_DBT; then
+    step "Setting up dbt project..."
+    DBT_PROJECT_NAME=$(grep -E '^name:' dbt_project.yml 2>/dev/null | head -1 | awk '{print $2}' | tr -d "'\"")
+    info "dbt project: $DBT_PROJECT_NAME"
+
+    # Install dbt deps if packages.yml exists
+    if [[ -f "packages.yml" ]] || [[ -f "dependencies.yml" ]]; then
+        step "Running dbt deps..."
+        if command -v dbt &>/dev/null; then
+            dbt deps 2>&1 | tail -3 | sed 's/^/    /'
+            info "dbt packages installed"
+        elif [[ -d ".venv" ]] && .venv/bin/dbt --version &>/dev/null 2>&1; then
+            .venv/bin/dbt deps 2>&1 | tail -3 | sed 's/^/    /'
+            info "dbt packages installed (from venv)"
+        else
+            warn "dbt not found in PATH or venv — install it to run dbt deps"
+        fi
+    fi
+
+    # Set up profiles.yml if not present
+    if [[ ! -f "profiles.yml" ]] && [[ -n "${DBT_PROFILES_DIR:-}" || ! -f "$HOME/.dbt/profiles.yml" ]]; then
+        warn "No profiles.yml found — copy template from workbench:"
+        echo -e "    ${CYAN}cp $WORKBENCH_DIR/agents/templates/profiles.yml .${RESET}"
+        echo -e "    ${DIM}Then set DBT_PROFILES_DIR=. in your .env${RESET}"
+    fi
+fi
+
 # ── SQL detection ──
 if $HAS_SQL; then
     SQL_COUNT=$(find . -maxdepth 5 -name "*.sql" 2>/dev/null | wc -l)
@@ -161,6 +214,18 @@ if $HAS_SQL; then
         echo "$SQL_DIRS" | while read -r d; do
             echo -e "      ${DIM}$d/${RESET}"
         done
+    fi
+fi
+
+# ── SQLPrism (for SQL/dbt projects) ──
+if $HAS_SQL || $HAS_DBT; then
+    step "Setting up sqlprism..."
+    if command -v sqlprism-init &>/dev/null; then
+        sqlprism-init .
+    elif [[ -x "$WORKBENCH_DIR/bin/sqlprism-init" ]]; then
+        "$WORKBENCH_DIR/bin/sqlprism-init" .
+    else
+        warn "sqlprism-init not in PATH — run: make onboard-link from workbench"
     fi
 fi
 
@@ -229,4 +294,10 @@ if $HAS_PYTHON; then
 fi
 
 echo -e "  Open editor:   ${CYAN}nvim .${RESET}  or  ${CYAN}code .${RESET}"
+
+# ── Scaffold if requested ──
+if $DO_SCAFFOLD; then
+    echo ""
+    "$WORKBENCH_DIR/bin/scaffold" .
+fi
 echo ""

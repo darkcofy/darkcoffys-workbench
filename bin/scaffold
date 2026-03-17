@@ -1,0 +1,408 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: project scaffolder
+# ──────────────────────────────────────────────
+# Sets up agent configs, artifact dirs, and
+# standard Makefile targets in any project.
+#
+# Usage:
+#   scaffold .              Scaffold current directory
+#   scaffold /path/to/repo  Scaffold a specific repo
+# ──────────────────────────────────────────────
+
+WORKBENCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TARGET="${1:-.}"
+
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+info()  { echo -e "${GREEN}  ✓ $*${RESET}"; }
+warn()  { echo -e "${YELLOW}  → $*${RESET}"; }
+step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
+skip()  { echo -e "${DIM}  - $* (already exists, skipping)${RESET}"; }
+
+cd "$TARGET"
+
+echo ""
+echo -e "  ${CYAN}darkcoffys scaffold${RESET}"
+echo "  ═══════════════════"
+echo -e "  ${DIM}$(pwd)${RESET}"
+echo ""
+
+# ── Detect project stack ──
+HAS_PYTHON=false
+HAS_SQL=false
+HAS_DBT=false
+[[ -f "pyproject.toml" || -f "requirements.txt" || -f "setup.py" ]] && HAS_PYTHON=true
+find . -maxdepth 3 -name "*.sql" -print -quit 2>/dev/null | grep -q . && HAS_SQL=true
+[[ -f "dbt_project.yml" ]] && HAS_DBT=true
+
+# ── 1. Agent config ──
+step "Setting up agent config..."
+mkdir -p agents
+if [[ ! -f "agents/config.yaml" ]]; then
+    cp "$WORKBENCH_DIR/agents/config.yaml" agents/config.yaml
+
+    # Auto-detect and fill in some values
+    if [[ -d ".git" ]]; then
+        DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+        sed -i "s/default_branch: main/default_branch: $DEFAULT_BRANCH/" agents/config.yaml
+
+        # Try to detect GitHub repo
+        REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+        if [[ "$REMOTE_URL" == *"github.com"* ]]; then
+            sed -i 's/engine: github/engine: github  # auto-detected/' agents/config.yaml
+        fi
+    fi
+
+    info "Created agents/config.yaml"
+else
+    skip "agents/config.yaml"
+fi
+
+# Copy agent instruction files
+for agent_file in research.md sdlc.md artifacts.md; do
+    if [[ ! -f "agents/$agent_file" ]]; then
+        cp "$WORKBENCH_DIR/agents/$agent_file" "agents/$agent_file"
+        info "Created agents/$agent_file"
+    else
+        skip "agents/$agent_file"
+    fi
+done
+
+# ── 2. Artifact directories ──
+step "Creating artifact directories..."
+mkdir -p .artifacts/{research,tasks,reports,scratch}
+info "Created .artifacts/{research,tasks,reports,scratch}"
+
+# ── 3. Gitignore for artifacts ──
+if [[ -f ".gitignore" ]]; then
+    if ! grep -q ".artifacts/scratch" .gitignore 2>/dev/null; then
+        echo "" >> .gitignore
+        echo "# Agent artifacts (scratch is ephemeral)" >> .gitignore
+        echo ".artifacts/scratch/" >> .gitignore
+        info "Updated .gitignore with .artifacts/scratch/"
+    else
+        skip ".gitignore already has .artifacts/scratch"
+    fi
+else
+    cat > .gitignore <<'GITIGNORE'
+# Agent artifacts (scratch is ephemeral)
+.artifacts/scratch/
+GITIGNORE
+    info "Created .gitignore"
+fi
+
+# ── 4. CLAUDE.md (if not present) ──
+step "Setting up AI agent instructions..."
+if [[ ! -f "CLAUDE.md" ]]; then
+    cat > CLAUDE.md <<'CLAUDEMD'
+# Project Instructions
+
+## Agent System
+
+This project uses darkcoffys-workbench agent workflows. Read these before starting:
+
+- `agents/config.yaml` — paths, connections, behavior settings
+- `agents/research.md` — research workflow (Socratic/first-principles)
+- `agents/sdlc.md` — full development lifecycle (issue → tasks → code → PR)
+- `agents/artifacts.md` — where to store generated files
+
+## Workflow
+
+1. For research/exploration tasks: follow `agents/research.md`
+2. For implementation tasks: follow `agents/sdlc.md`
+3. Always save artifacts per `agents/artifacts.md` and `agents/config.yaml`
+
+## Standards
+
+CLAUDEMD
+
+    # Add Python-specific instructions
+    if $HAS_PYTHON; then
+        cat >> CLAUDE.md <<'PYMD'
+- Run `make lint` (ruff) before every commit
+- Run `make test` (pytest) before marking tasks complete
+- Use type hints on all public functions
+- Format with ruff format
+PYMD
+    fi
+
+    if $HAS_DBT; then
+        cat >> CLAUDE.md <<'DBTMD'
+- Run `make lint-sql` (sqlfluff) on SQL changes
+- Run `dbt build` to test models before marking tasks complete
+- Follow the existing model naming conventions (stg_, int_, fct_, dim_)
+- Use refs and sources — never hardcode table names
+- Add schema tests for every new model (unique, not_null at minimum)
+- Use `sqlprism reindex` after adding/modifying SQL files
+- Use `sqlprism serve` for MCP-based SQL analysis
+DBTMD
+    elif $HAS_SQL; then
+        cat >> CLAUDE.md <<'SQLMD'
+- SQL files go in the established directory structure
+- Run `make lint-sql` (sqlfluff) on SQL changes
+- Use parameterized queries — never string interpolation
+- Include migration rollback for every migration
+- Use `sqlprism reindex` after adding/modifying SQL files
+SQLMD
+    fi
+
+    info "Created CLAUDE.md"
+else
+    skip "CLAUDE.md"
+fi
+
+# ── 5. .cursorrules (mirrors CLAUDE.md intent) ──
+if [[ ! -f ".cursorrules" ]]; then
+    cat > .cursorrules <<'CURSOR'
+Read CLAUDE.md and agents/ directory for full project instructions.
+Follow agents/sdlc.md for implementation tasks.
+Follow agents/research.md for research tasks.
+Save all artifacts per agents/config.yaml paths.
+CURSOR
+    info "Created .cursorrules"
+else
+    skip ".cursorrules"
+fi
+
+# ── 6. Standard Makefile targets (append if Makefile exists, create if not) ──
+step "Setting up standard Makefile targets..."
+
+# Check if the essential targets already exist
+NEED_MAKEFILE=false
+if [[ ! -f "Makefile" ]]; then
+    NEED_MAKEFILE=true
+elif ! grep -q "^lint:" Makefile 2>/dev/null; then
+    NEED_MAKEFILE=true
+fi
+
+if $NEED_MAKEFILE; then
+    if [[ ! -f "Makefile" ]]; then
+        # Create new Makefile
+        cat > Makefile <<'MAKEFILE'
+.DEFAULT_GOAL := help
+
+.PHONY: help lint fmt test typecheck dev clean
+
+help: ## Show available targets
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[0;36m%-14s\033[0m %s\n", $$1, $$2}'
+
+MAKEFILE
+
+        if $HAS_PYTHON; then
+            cat >> Makefile <<'PYMAKE'
+
+lint: ## Run linter (ruff)
+	ruff check .
+
+fmt: ## Format code (ruff)
+	ruff format .
+	ruff check --fix .
+
+test: ## Run tests (pytest)
+	pytest -x -q
+
+typecheck: ## Type check (pyright)
+	pyright .
+
+dev: ## Start dev server
+	@echo "TODO: configure dev server command"
+
+clean: ## Remove build artifacts
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	rm -rf dist/ build/ .ruff_cache/
+PYMAKE
+        fi
+
+        if $HAS_DBT; then
+            cat >> Makefile <<'DBTMAKE'
+
+# ── dbt targets ──
+
+dbt-deps: ## Install dbt packages
+	dbt deps
+
+dbt-build: ## Build all dbt models + tests
+	dbt build
+
+dbt-run: ## Run dbt models
+	dbt run
+
+dbt-test: ## Run dbt tests
+	dbt test
+
+dbt-compile: ## Compile dbt models (no execution)
+	dbt compile
+
+dbt-docs: ## Generate and serve dbt docs
+	dbt docs generate && dbt docs serve
+
+lint-sql: ## Lint SQL files (sqlfluff)
+	sqlfluff lint .
+
+fix-sql: ## Auto-fix SQL files (sqlfluff)
+	sqlfluff fix .
+
+sqlprism-index: ## Reindex SQL files with sqlprism
+	sqlprism reindex
+
+sqlprism-serve: ## Start sqlprism MCP server
+	sqlprism serve
+DBTMAKE
+        elif $HAS_SQL; then
+            cat >> Makefile <<'SQLMAKE'
+
+# ── SQL targets ──
+
+lint-sql: ## Lint SQL files (sqlfluff)
+	sqlfluff lint .
+
+fix-sql: ## Auto-fix SQL files (sqlfluff)
+	sqlfluff fix .
+
+sqlprism-index: ## Reindex SQL files with sqlprism
+	sqlprism reindex
+
+sqlprism-serve: ## Start sqlprism MCP server
+	sqlprism serve
+SQLMAKE
+        fi
+        info "Created Makefile with standard targets"
+    else
+        # Append agent-friendly targets to existing Makefile
+        cat >> Makefile <<'APPENDMAKE'
+
+# ── Agent-standard targets (added by darkcoffys scaffold) ──
+ifndef SCAFFOLD_TARGETS
+SCAFFOLD_TARGETS := 1
+
+lint: ## Run linter
+	ruff check .
+
+fmt: ## Format code
+	ruff format .
+	ruff check --fix .
+
+test: ## Run tests
+	pytest -x -q
+endif
+APPENDMAKE
+        info "Appended standard targets to existing Makefile"
+    fi
+else
+    skip "Makefile already has standard targets"
+fi
+
+# ── 7. Pre-commit config ──
+if [[ ! -f ".pre-commit-config.yaml" ]] && $HAS_PYTHON; then
+    cat > .pre-commit-config.yaml <<'PRECOMMIT'
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+PRECOMMIT
+    info "Created .pre-commit-config.yaml"
+else
+    $HAS_PYTHON && skip ".pre-commit-config.yaml" || true
+fi
+
+# ── 8. sqlfluff config (SQL/dbt projects) ──
+if ($HAS_SQL || $HAS_DBT) && [[ ! -f ".sqlfluff" ]]; then
+    step "Setting up sqlfluff..."
+    cp "$WORKBENCH_DIR/agents/templates/sqlfluff.cfg" .sqlfluff
+
+    # Adjust templater for non-dbt projects
+    if ! $HAS_DBT; then
+        sed -i 's/templater = dbt/templater = raw/' .sqlfluff
+    fi
+
+    info "Created .sqlfluff"
+elif ($HAS_SQL || $HAS_DBT); then
+    skip ".sqlfluff"
+fi
+
+# ── 9. direnv + .env template ──
+step "Setting up environment management..."
+if [[ ! -f ".envrc" ]]; then
+    cp "$WORKBENCH_DIR/agents/templates/envrc" .envrc
+    info "Created .envrc (run 'direnv allow' to activate)"
+else
+    skip ".envrc"
+fi
+
+if [[ ! -f ".env.template" ]]; then
+    cp "$WORKBENCH_DIR/agents/templates/env.template" .env.template
+    info "Created .env.template"
+else
+    skip ".env.template"
+fi
+
+# Ensure .env is gitignored
+if [[ -f ".gitignore" ]] && ! grep -q "^\.env$" .gitignore 2>/dev/null; then
+    echo ".env" >> .gitignore
+    info "Added .env to .gitignore"
+fi
+
+# ── 10. sqlprism setup (SQL/dbt projects) ──
+if $HAS_SQL || $HAS_DBT; then
+    step "Setting up sqlprism..."
+    if [[ ! -f "sqlprism.yml" ]] && [[ ! -f "sqlprism.json" ]]; then
+        if command -v sqlprism &>/dev/null; then
+            sqlprism init --format yaml 2>/dev/null || true
+            info "Created sqlprism.yml (edit to configure your SQL paths)"
+        elif command -v sqlprism-init &>/dev/null; then
+            sqlprism-init . 2>/dev/null || true
+        else
+            warn "sqlprism not installed — run 'sqlprism-init .' after installing"
+        fi
+    else
+        skip "sqlprism config"
+    fi
+fi
+
+# ── Summary ──
+echo ""
+echo "  ──────────────────────────────────────"
+echo -e "  ${GREEN}Scaffold complete${RESET}"
+echo ""
+echo -e "  ${CYAN}What was set up:${RESET}"
+echo "    agents/config.yaml       ← edit connections & paths"
+echo "    agents/research.md       ← research agent instructions"
+echo "    agents/sdlc.md           ← SDLC agent instructions"
+echo "    agents/artifacts.md      ← artifact storage rules"
+echo "    .artifacts/              ← output directories"
+echo "    CLAUDE.md                ← AI agent project instructions"
+echo "    .cursorrules             ← Cursor agent instructions"
+echo "    Makefile                 ← standard targets (lint/fmt/test)"
+echo "    .envrc + .env.template   ← environment management (direnv)"
+($HAS_SQL || $HAS_DBT) && echo "    .sqlfluff                ← SQL linter config"
+($HAS_SQL || $HAS_DBT) && echo "    sqlprism.yml             ← SQL indexing config"
+$HAS_DBT && echo "    dbt targets              ← make dbt-build, dbt-test, etc."
+echo ""
+echo -e "  ${YELLOW}Next steps:${RESET}"
+echo "    1. cp .env.template .env — fill in your credentials"
+echo "    2. direnv allow — auto-load env vars"
+echo "    3. Edit agents/config.yaml — set your ticket engine, DB, etc."
+($HAS_SQL || $HAS_DBT) && echo "    4. Edit sqlprism.yml — configure SQL paths, then: sqlprism reindex"
+echo "    5. Start working: agents will follow the SDLC workflow"
+echo ""

@@ -1,0 +1,70 @@
+# ──────────────────────────────────────────────
+# darkcoffys-workbench :: agent configuration
+# ──────────────────────────────────────────────
+# Drop this into any project root. Agents read this
+# to know where things go and how to connect.
+
+# ── Artifact storage ──
+artifacts:
+  base_dir: .artifacts          # root for all generated artifacts
+  research: .artifacts/research # research outputs
+  tasks: .artifacts/tasks       # task lists and progress
+  reports: .artifacts/reports   # summaries, retrospectives
+  scratch: .artifacts/scratch   # temporary working files
+
+# ── SDLC connections ──
+sdlc:
+  # Ticket engine (uncomment the one you use)
+  tickets:
+    # engine: github       # uses gh CLI
+    # engine: jira         # uses Atlassian MCP
+    # engine: linear       # uses Linear MCP
+    engine: github
+    project: ""            # e.g. "PROJ" for Jira, repo for GitHub
+    default_labels:
+      - "agent-created"
+
+  # Repository
+  repo:
+    default_branch: main
+    branch_prefix: feat-    # e.g. feat-add-auth
+    auto_commit: true       # commit after each completed task
+    commit_style: conventional  # conventional | freeform
+
+  # Database / MCP
+  mcp:
+    enabled: false
+    # servers:
+    #   - name: postgres
+    #     command: "mcp-server-postgres"
+    #     args: ["postgresql://localhost:5432/mydb"]
+    #   - name: sqlite
+    #     command: "mcp-server-sqlite"
+    #     args: ["./data/app.db"]
+
+  # GitHub access
+  github:
+    auto_pr: true           # create PR when task list complete
+    pr_template: true       # use .github/pull_request_template.md
+    request_review: false   # auto-request review
+    # reviewers: []
+
+# ── Research agent ──
+research:
+  method: socratic           # socratic | freeform
+  max_depth: 5               # max rounds of questioning
+  output_format: markdown    # markdown | json
+  save_chain: true           # save the full reasoning chain
+  first_principles:
+    - "What problem are we actually solving?"
+    - "What are the constraints?"
+    - "What are we assuming that might be wrong?"
+    - "What's the simplest version of this?"
+    - "What would make this fail?"
+
+# ── Agent behavior ──
+defaults:
+  verbose: true              # show reasoning steps
+  dry_run: false             # preview without executing
+  parallel_tasks: true       # run independent tasks concurrently
+  max_parallel: 3            # max concurrent task branches

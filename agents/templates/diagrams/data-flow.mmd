@@ -1,0 +1,77 @@
+%% ──────────────────────────────────────────────
+%% Data Platform Architecture / Flow Diagram
+%% ──────────────────────────────────────────────
+%% High-level view of your data platform: ingestion,
+%% transformation, storage, and consumption.
+%%
+%% Render: mmdc -i data-flow.mmd -o data-flow.png
+%% ──────────────────────────────────────────────
+
+graph TB
+    classDef source fill:#f4845f,stroke:#333,color:#fff
+    classDef ingest fill:#f8961e,stroke:#333,color:#333
+    classDef transform fill:#f9c74f,stroke:#333,color:#333
+    classDef storage fill:#577590,stroke:#333,color:#fff
+    classDef serve fill:#43aa8b,stroke:#333,color:#fff
+    classDef consume fill:#4d908e,stroke:#333,color:#fff
+
+    subgraph Sources
+        app_db[(App PostgreSQL)]:::source
+        stripe[(Stripe)]:::source
+        hubspot[(HubSpot)]:::source
+        ga[(Google Analytics)]:::source
+        %% HINT: Add your source systems
+    end
+
+    subgraph Ingestion
+        fivetran[Fivetran / Airbyte]:::ingest
+        %% HINT: Replace with your ingestion tool
+        %% Options: Fivetran, Airbyte, Stitch, custom ETL
+    end
+
+    subgraph "Transformation (dbt)"
+        staging[Staging Layer]:::transform
+        intermediate[Intermediate Layer]:::transform
+        marts[Facts & Dimensions]:::transform
+        metrics[Metric Layer]:::transform
+    end
+
+    subgraph Storage
+        warehouse[(Snowflake / Postgres / BigQuery)]:::storage
+        %% HINT: Replace with your warehouse
+    end
+
+    subgraph Serving
+        sqlprism[SQLPrism MCP Server]:::serve
+        semantic[Semantic Layer]:::serve
+        %% HINT: Add if you have a semantic layer
+        %% Options: dbt Semantic Layer, Cube, Lightdash
+    end
+
+    subgraph Consumption
+        looker([BI / Dashboards]):::consume
+        notebooks([Jupyter / Analysis]):::consume
+        ai_agents([AI Agents / LLMs]):::consume
+        reverse_etl([Reverse ETL]):::consume
+        %% HINT: Add your consumption tools
+    end
+
+    %% ── Flow ──
+    Sources --> Ingestion
+    Ingestion --> warehouse
+    warehouse --> staging
+    staging --> intermediate
+    intermediate --> marts
+    marts --> metrics
+
+    marts --> sqlprism
+    marts --> semantic
+    metrics --> looker
+    semantic --> looker
+    sqlprism --> ai_agents
+    marts --> notebooks
+    metrics --> reverse_etl
+
+    %% HINT: Customize this to match your actual architecture.
+    %% This is a starting point — remove what you don't have,
+    %% add what's missing.

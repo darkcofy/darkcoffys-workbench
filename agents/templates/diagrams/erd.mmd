@@ -1,0 +1,59 @@
+%% ──────────────────────────────────────────────
+%% Entity Relationship Diagram
+%% ──────────────────────────────────────────────
+%% Usage: copy into your design review or README
+%%   ```mermaid
+%%   <paste contents>
+%%   ```
+%% Or render to PNG: mmdc -i erd.mmd -o erd.png
+%% ──────────────────────────────────────────────
+
+erDiagram
+    %% ── Dimensions ──
+    dim_customers {
+        varchar customer_id PK "Surrogate key"
+        varchar email "Business key"
+        varchar name
+        varchar plan_tier "free | starter | pro | enterprise"
+        timestamp created_at
+        boolean is_active
+    }
+
+    dim_products {
+        varchar product_id PK
+        varchar product_name
+        varchar category
+        decimal price_usd
+        boolean is_active
+    }
+
+    %% ── Facts ──
+    fct_orders {
+        varchar order_id PK
+        varchar customer_id FK
+        varchar product_id FK
+        date order_date
+        decimal order_amount_usd
+        varchar status "pending | completed | refunded"
+        timestamp created_at
+    }
+
+    fct_payments {
+        varchar payment_id PK
+        varchar order_id FK
+        varchar payment_method "card | bank | wallet"
+        decimal amount_usd
+        varchar status "succeeded | failed | refunded"
+        timestamp processed_at
+    }
+
+    %% ── Relationships ──
+    dim_customers ||--o{ fct_orders : "places"
+    dim_products  ||--o{ fct_orders : "contains"
+    fct_orders    ||--o{ fct_payments : "paid via"
+
+    %% HINT: Replace with your actual models.
+    %% Relationship types:
+    %%   ||--o{  one-to-many
+    %%   ||--||  one-to-one
+    %%   }o--o{  many-to-many

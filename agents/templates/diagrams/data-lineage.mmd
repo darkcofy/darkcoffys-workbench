@@ -1,0 +1,72 @@
+%% ──────────────────────────────────────────────
+%% Data Lineage / DAG Diagram
+%% ──────────────────────────────────────────────
+%% Shows how data flows from sources through
+%% transformations to consumption.
+%%
+%% Render: mmdc -i data-lineage.mmd -o lineage.png
+%% ──────────────────────────────────────────────
+
+graph LR
+    %% ── Style ──
+    classDef source fill:#f4845f,stroke:#333,color:#fff
+    classDef staging fill:#f9c74f,stroke:#333,color:#333
+    classDef intermediate fill:#90be6d,stroke:#333,color:#333
+    classDef mart fill:#577590,stroke:#333,color:#fff
+    classDef dashboard fill:#43aa8b,stroke:#333,color:#fff
+
+    %% ── Sources ──
+    src_app[(App DB)]:::source
+    src_stripe[(Stripe API)]:::source
+    src_hubspot[(HubSpot)]:::source
+
+    %% ── Staging ──
+    stg_users[stg_app__users]:::staging
+    stg_events[stg_app__events]:::staging
+    stg_payments[stg_stripe__payments]:::staging
+    stg_contacts[stg_hubspot__contacts]:::staging
+
+    %% ── Intermediate ──
+    int_sessions[int_events__sessionized]:::intermediate
+    int_payments[int_payments__enriched]:::intermediate
+
+    %% ── Facts & Dimensions ──
+    fct_orders[fct_orders]:::mart
+    fct_sessions[fct_sessions]:::mart
+    dim_customers[dim_customers]:::mart
+
+    %% ── Metrics ──
+    mrt_revenue[mrt_revenue__monthly]:::mart
+    mrt_retention[mrt_retention__cohort]:::mart
+
+    %% ── Dashboards ──
+    dash_revenue([Revenue Dashboard]):::dashboard
+    dash_product([Product KPIs]):::dashboard
+
+    %% ── Lineage ──
+    src_app --> stg_users & stg_events
+    src_stripe --> stg_payments
+    src_hubspot --> stg_contacts
+
+    stg_events --> int_sessions
+    stg_payments --> int_payments
+
+    stg_users --> dim_customers
+    stg_contacts --> dim_customers
+    int_payments --> fct_orders
+    int_sessions --> fct_sessions
+    dim_customers --> fct_orders
+
+    fct_orders --> mrt_revenue
+    fct_sessions --> mrt_retention
+    dim_customers --> mrt_retention
+
+    mrt_revenue --> dash_revenue
+    mrt_retention --> dash_product
+
+    %% HINT: Replace with your actual models.
+    %% Generate from sqlprism: sqlprism query "show lineage"
+    %% Shapes:
+    %%   [(text)]  = cylinder (database/source)
+    %%   [text]    = rectangle (model)
+    %%   ([text])  = stadium (dashboard/external)

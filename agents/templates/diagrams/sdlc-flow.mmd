@@ -1,0 +1,75 @@
+%% ──────────────────────────────────────────────
+%% SDLC Agent Workflow Diagram
+%% ──────────────────────────────────────────────
+%% Visualizes the development lifecycle that
+%% agents follow from issue to PR.
+%%
+%% Render: mmdc -i sdlc-flow.mmd -o sdlc-flow.png
+%% ──────────────────────────────────────────────
+
+flowchart TD
+    classDef gate fill:#f4845f,stroke:#333,color:#fff
+    classDef action fill:#577590,stroke:#333,color:#fff
+    classDef artifact fill:#f9c74f,stroke:#333,color:#333
+    classDef decision fill:#90be6d,stroke:#333,color:#333
+
+    start([New Issue]) --> ingest
+
+    subgraph "Stage 1: Ingest"
+        ingest[Fetch issue from ticket engine]:::action
+        ingest --> unclear{Issue clear?}:::decision
+        unclear -->|No| research[Research Agent<br>Socratic decomposition]:::action
+        research --> save_research[/Save to .artifacts/research/\]:::artifact
+        save_research --> unclear
+        unclear -->|Yes| save_issue[/Save to .artifacts/tasks/ID/issue.json\]:::artifact
+    end
+
+    save_issue --> significant{Significant<br>change?}:::decision
+
+    subgraph "Stage 1.5: Design Review"
+        significant -->|Yes| design[Fill design review template]:::action
+        design --> impact[Run impact analysis]:::action
+        impact --> risk{Risk level?}:::decision
+        risk -->|High/Critical| approval[⛔ Human approval required]:::gate
+        approval --> plan
+        risk -->|Low/Medium| plan
+    end
+
+    significant -->|No| plan
+
+    subgraph "Stage 2: Plan"
+        plan[Create task list]:::action
+        plan --> save_tasks[/Save .artifacts/tasks/ID/tasks.json\]:::artifact
+    end
+
+    save_tasks --> execute
+
+    subgraph "Stage 3: Execute"
+        execute[Process tasks by parallel group]:::action
+        execute --> code[Write code]:::action
+        code --> lint[make lint]:::action
+        lint --> test[make test]:::action
+        test --> pass{Pass?}:::decision
+        pass -->|No| fix[Fix issues]:::action
+        fix --> lint
+        pass -->|Yes| commit[Git commit]:::action
+        commit --> more{More tasks?}:::decision
+        more -->|Yes| execute
+    end
+
+    more -->|No| verify
+
+    subgraph "Stage 4: Verify"
+        verify[Full test suite]:::action
+        verify --> summary[/Save .artifacts/tasks/ID/summary.md\]:::artifact
+    end
+
+    summary --> deliver
+
+    subgraph "Stage 5: Deliver"
+        deliver[Push branch]:::action
+        deliver --> pr[Create PR]:::action
+        pr --> ticket[Update ticket status]:::action
+    end
+
+    ticket --> done([Done])

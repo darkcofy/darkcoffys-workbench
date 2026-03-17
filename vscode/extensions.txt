@@ -9,3 +9,4 @@ esbenp.prettier-vscode
 innoverio.vscode-dbt-power-user
 dorzey.vscode-sqlfluff
 mtxr.sqltools
+bierner.markdown-mermaid

@@ -114,6 +114,26 @@ shell-rc: ## Wire up shell (starship, zoxide, direnv, fzf, aliases) in your rc f
 	fi
 
 # ═══════════════════════════════════════════════
+# Diagramming
+# ═══════════════════════════════════════════════
+
+mermaid: ## Install Mermaid CLI (mmdc) for diagram rendering
+	@echo -e "$(GREEN)Setting up Mermaid CLI...$(RESET)"
+	@if ! command -v mmdc &>/dev/null; then \
+		if command -v npm &>/dev/null; then \
+			echo -e "$(YELLOW)  Installing @mermaid-js/mermaid-cli...$(RESET)"; \
+			npm install -g @mermaid-js/mermaid-cli; \
+		elif command -v npx &>/dev/null; then \
+			echo -e "$(DIM)  npm not global — use: npx mmdc -i diagram.mmd -o diagram.png$(RESET)"; \
+		else \
+			echo -e "$(YELLOW)  Node.js not found. Install Node first, or use GitHub rendering.$(RESET)"; \
+			echo -e "$(DIM)  Mermaid renders natively in GitHub markdown — no CLI needed for that.$(RESET)"; \
+		fi; \
+	else \
+		echo -e "$(DIM)  mmdc already installed$(RESET)"; \
+	fi
+
+# ═══════════════════════════════════════════════
 # Python toolchain
 # ═══════════════════════════════════════════════
 

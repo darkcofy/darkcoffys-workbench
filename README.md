@@ -81,6 +81,11 @@ darkcoffys-workbench/
 │       ├── domain-ownership.yml     ← ownership & stakeholder map
 │       ├── adrs/000-template.md     ← ADR template
 │       ├── runbooks/data-incident.md← incident response playbook
+│       ├── diagrams/                ← Mermaid diagram templates
+│       │   ├── erd.mmd             ← entity relationship
+│       │   ├── data-lineage.mmd    ← DAG / lineage
+│       │   ├── data-flow.mmd       ← platform architecture
+│       │   └── sdlc-flow.mmd       ← agent workflow
 │       ├── sqlfluff.cfg     ← SQL linter config
 │       ├── env.template     ← .env skeleton
 │       ├── envrc            ← direnv config
@@ -488,6 +493,34 @@ Maps who owns what — **fill in the `HINT` placeholders**:
 - **Platform team** — on-call rotation, escalation path
 - **Source systems** — system owner, integration method, schema change notification
 - **Change notification rules** — who to notify for breaking changes, new models, deprecations
+
+### Diagrams (`agents/templates/diagrams/`)
+
+Mermaid-based diagram templates that render in GitHub, VS Code, and can be exported to PNG via `mmdc`:
+
+| Template | Use for |
+|----------|---------|
+| `erd.mmd` | Entity relationship diagrams — model your facts & dimensions |
+| `data-lineage.mmd` | DAG showing source → staging → marts → dashboards |
+| `data-flow.mmd` | High-level platform architecture (ingestion, warehouse, BI) |
+| `sdlc-flow.mmd` | The agent workflow from issue to PR |
+
+```bash
+# Render to PNG
+mmdc -i agents/templates/diagrams/erd.mmd -o docs/erd.png
+
+# Or embed in any markdown file (renders on GitHub natively):
+```
+
+````markdown
+```mermaid
+erDiagram
+    dim_customers ||--o{ fct_orders : "places"
+    dim_products  ||--o{ fct_orders : "contains"
+```
+````
+
+Install Mermaid CLI: `make mermaid` (requires Node.js), or use the VS Code extension (installed automatically in full mode).
 
 ---
 

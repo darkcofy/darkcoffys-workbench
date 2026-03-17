@@ -32,19 +32,30 @@ src_app__events → stg_app__events → ??? (gap) → dashboard
 
 ### 3.1 Entity Relationship
 
-```
-[dim_customers] 1──* [fct_orders] *──1 [dim_products]
-                         │
-                         ▼
-                  [mrt_revenue__weekly]
+```mermaid
+erDiagram
+    dim_customers ||--o{ fct_orders : "places"
+    dim_products  ||--o{ fct_orders : "contains"
+    fct_orders    ||--o{ fct_payments : "paid via"
+
+    dim_customers {
+        varchar customer_id PK
+        varchar email
+        varchar plan_tier
+    }
+
+    fct_orders {
+        varchar order_id PK
+        varchar customer_id FK
+        varchar product_id FK
+        decimal order_amount_usd
+    }
 ```
 
-<!-- HINT: Generate with Mermaid if available:
-     ```mermaid
-     erDiagram
-         dim_customers ||--o{ fct_orders : places
-         dim_products ||--o{ fct_orders : contains
-     ``` -->
+<!-- HINT: Replace with your actual models.
+     This renders natively in GitHub, VS Code (with extension), and
+     can be exported to PNG: mmdc -i design-review.md -o diagram.png
+     See agents/templates/diagrams/ for more examples. -->
 
 ### 3.2 New/Modified Models
 

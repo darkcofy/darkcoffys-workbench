@@ -110,6 +110,13 @@ if [[ ! -f "modeling-conventions.md" ]] && ($HAS_SQL || $HAS_DBT); then
     info "Created modeling-conventions.md (review and adjust for your org)"
 fi
 
+# Diagram templates
+if [[ ! -d "agents/templates/diagrams" ]]; then
+    mkdir -p agents/templates/diagrams
+    cp "$WORKBENCH_DIR"/agents/templates/diagrams/*.mmd agents/templates/diagrams/ 2>/dev/null || true
+    info "Created agents/templates/diagrams/ (ERD, lineage, data flow, SDLC)"
+fi
+
 # ── 2. Artifact directories ──
 step "Creating artifact directories..."
 mkdir -p .artifacts/{research,tasks,reports,scratch} adrs

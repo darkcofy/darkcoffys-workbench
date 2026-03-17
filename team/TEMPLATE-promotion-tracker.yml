@@ -47,6 +47,13 @@ delivery:
     #   what: "Led architecture review for Client X migration"
     #   impact: "Identified $200K savings by consolidating 3 pipelines"
 
+  feedback_received:
+    # - date: "2026-06-15"
+    #   from: "Partner Jane Smith"
+    #   context: "Quarterly review"
+    #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
+    #   sentiment: positive  # positive | constructive | negative
+
 # ═══════════════════════════════════════════════
 # PILLAR 2: People & Team Development
 # ═══════════════════════════════════════════════
@@ -77,6 +84,13 @@ people:
     # - date: "2026-09-15"
     #   what: "Ran dbt best practices lunch-and-learn (15 attendees)"
 
+  feedback_received:
+    # - date: "2026-06-15"
+    #   from: "Partner Jane Smith"
+    #   context: "Quarterly review"
+    #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
+    #   sentiment: positive  # positive | constructive | negative
+
 # ═══════════════════════════════════════════════
 # PILLAR 3: Business Development
 # ═══════════════════════════════════════════════
@@ -101,6 +115,13 @@ business_development:
     # - date: "2026-06-20"
     #   what: "Identified dbt migration opportunity at Client Y during delivery"
     #   impact: "Led to $200K proposal, won in August"
+
+  feedback_received:
+    # - date: "2026-06-15"
+    #   from: "Partner Jane Smith"
+    #   context: "Quarterly review"
+    #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
+    #   sentiment: positive  # positive | constructive | negative
 
 # ═══════════════════════════════════════════════
 # PILLAR 4: Thought Leadership & Market Presence
@@ -129,6 +150,13 @@ thought_leadership:
     # - "Contributor to firm data accelerator demo"
     # - "Reviewer for firm's dbt standards"
 
+  feedback_received:
+    # - date: "2026-06-15"
+    #   from: "Partner Jane Smith"
+    #   context: "Quarterly review"
+    #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
+    #   sentiment: positive  # positive | constructive | negative
+
 # ═══════════════════════════════════════════════
 # PILLAR 5: Operational Excellence
 # ═══════════════════════════════════════════════
@@ -143,6 +171,47 @@ operations:
     # - date: "2026-07-15"
     #   what: "Created data quality monitoring framework (reusable)"
     #   impact: "Adopted by 2 other teams, prevented 3 client incidents"
+
+  feedback_received:
+    # - date: "2026-06-15"
+    #   from: "Partner Jane Smith"
+    #   context: "Quarterly review"
+    #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
+    #   sentiment: positive  # positive | constructive | negative
+
+# ═══════════════════════════════════════════════
+# INTERNAL RELATIONSHIPS
+# ═══════════════════════════════════════════════
+# Track your political capital. Who knows you, who sponsors you,
+# who brings you into deals. This is as important as delivery.
+
+relationships:
+  sponsor:
+    name: ""           # the partner championing your promotion
+    relationship: ""   # strong | building | cold
+    last_interaction: ""
+    notes: ""
+
+  key_partners:
+    # Partners who know your work and can vouch for you
+    # - name: "Partner X"
+    #   service_line: "Data & Analytics"
+    #   relationship: "strong"  # strong | building | cold
+    #   how_connected: "Led delivery on their Client Y engagement"
+    #   last_interaction: "2026-06-01"
+    #   can_help_with: "BD introductions, promotion vote"
+
+  key_peers:
+    # Fellow managers who you collaborate with
+    # - name: "Manager Y"
+    #   team: "Cloud Engineering"
+    #   relationship: "strong"
+    #   notes: "Cross-staffs on data + cloud deals"
+
+  networking_goals:
+    # - "Meet 2 partners outside my service line per quarter"
+    # - "Present at internal CoP monthly"
+    # - "Join the firm's data strategy working group"
 
 # ═══════════════════════════════════════════════
 # QUARTERLY SELF-ASSESSMENT

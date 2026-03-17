@@ -24,7 +24,7 @@
 - [ ] Identify one "quick win" — something visible you can deliver in 30 days
 
 ### Day 30 deliverable:
-- Team roster filled out (`team/roster.yml`)
+- Team roster filled out (`team/my-roster.yml`)
 - All engagement trackers created (`team/engagements/`)
 - Stakeholder map for each client
 - First 1:1 notes for every direct report
@@ -49,7 +49,7 @@
 - One completed quick win with visible impact
 - Weekly status cadence established
 - First BD contribution (even if just reviewing a proposal)
-- Promotion tracker started (`team/promotion-tracker.yml`)
+- Promotion tracker started (`team/my-promotion-tracker.yml`)
 
 ## Days 61-90: Lead & Expand
 

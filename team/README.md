@@ -188,6 +188,16 @@ cp team/weekly-status/TEMPLATE.md team/weekly-status/$(date +%Y-%m-%d).md
 team-status                                     # check your dashboard
 ```
 
+## Minimum Viable Weekly Habit
+
+Bad week? No time? Do ONLY these three things (5 minutes total):
+
+1. **Update hours burned** in each engagement YAML (`budget.hours_burned`)
+2. **Log one evidence item** in your promotion tracker (any pillar)
+3. **Note one thing** from each 1:1 you had this week
+
+That's it. Everything else can wait. The system stays alive as long as you do these three.
+
 ## Privacy
 
 **Templates are committed. Your filled-in data is gitignored automatically.**
@@ -200,3 +210,19 @@ The `.gitignore` excludes:
 - `team/personal/my-*.md` — your personal plans
 
 Templates (`TEMPLATE-*`, `TEMPLATE.*`) are safe to share — they only have commented-out examples.
+
+### Recommended: encrypt sensitive files
+
+For extra protection, use `age` or `git-crypt`:
+
+```bash
+# age (simple file encryption)
+age-keygen -o key.txt
+age -e -R key.txt team/my-promotion-tracker.yml > team/my-promotion-tracker.yml.age
+
+# git-crypt (transparent git encryption)
+git-crypt init
+echo "team/my-*.yml filter=git-crypt diff=git-crypt" >> .gitattributes
+```
+
+This is especially important for 1:1 notes (HR-sensitive) and engagement trackers (client-confidential).

@@ -1,5 +1,12 @@
 # Design Review: [Feature/Model Name]
 
+> **Choose your tier based on effort:**
+> - **Small** (< 1 week): Fill sections 1, 3.1, 5 only
+> - **Medium** (1-4 weeks): Fill sections 1, 3, 5, 6, 7
+> - **Large** (> 4 weeks): Fill all sections
+>
+> Don't skip the design review — just right-size it.
+
 **Date:** YYYY-MM-DD
 **Author:** [name]
 **Reviewers:** [names]

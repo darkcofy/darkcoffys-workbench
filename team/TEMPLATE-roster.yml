@@ -19,6 +19,9 @@ members:
   #   location: "Sydney"
   #   utilization_target: 80   # percent
   #
+  #   # NOTE: These are YOUR working estimates for staffing decisions, not
+  #   # official performance ratings. Share and calibrate with peers where possible.
+  #   # Include the person's self-assessment where it differs from yours.
   #   skills:
   #     # Rate 1-5: 1=learning, 2=can do with help, 3=independent,
   #     #           4=can lead/teach, 5=firm-wide expert
@@ -43,6 +46,8 @@ members:
   #     end_date: "2026-09-30"
   #
   #   development:
+  #     their_stated_goals: "Wants to move into architecture, interested in Snowflake"
+  #     agreed_plan: true   # have you discussed and agreed this plan with them?
   #     goal: "Promote to Manager by Q1 2027"
   #     focus_areas:
   #       - "Architecture design — needs exposure to design reviews"

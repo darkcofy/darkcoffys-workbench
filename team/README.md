@@ -2,6 +2,11 @@
 
 A YAML-driven system for managing a data team, tracking engagements, and building your promotion case. Designed for managers/senior ICs in consulting or enterprise data teams.
 
+> **Important:** These are personal working notes to help you be a better manager.
+> They **supplement, not replace** your firm's official performance management system.
+> Any performance concerns documented here **must also be raised** through official channels.
+> See the [Privacy & Compliance](#privacy) section for data protection guidance.
+
 **Templates are committed. Your filled-in data should stay private** (separate private repo or `.gitignore`).
 
 ---
@@ -210,6 +215,16 @@ The `.gitignore` excludes:
 - `team/personal/my-*.md` — your personal plans
 
 Templates (`TEMPLATE-*`, `TEMPLATE.*`) are safe to share — they only have commented-out examples.
+
+### Data protection obligations
+
+If you operate in the UK, EU, or Australia (or manage people there), be aware:
+- Structured personal data about employees (which these YAML files are) may fall under **GDPR, UK DPA, or equivalent legislation**
+- Employees generally have the right to request access to data held about them — including personal manager notes if they are systematic and searchable
+- If your laptop is lost or compromised, this constitutes a personal data breach
+- **Never store** protected characteristics, health information, or anything unrelated to work performance
+- Keep notes factual and behavior-based, not judgmental
+- When in doubt, ask: "Would I be comfortable if this person read this note?"
 
 ### Recommended: encrypt sensitive files
 

@@ -52,7 +52,7 @@ delivery:
     #   from: "Partner Jane Smith"
     #   context: "Quarterly review"
     #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
-    #   sentiment: positive  # positive | constructive | negative
+    #   type: peer | upward | client | review   # source context, not judgment
 
 # ═══════════════════════════════════════════════
 # PILLAR 2: People & Team Development
@@ -89,7 +89,7 @@ people:
     #   from: "Partner Jane Smith"
     #   context: "Quarterly review"
     #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
-    #   sentiment: positive  # positive | constructive | negative
+    #   type: peer | upward | client | review   # source context, not judgment
 
 # ═══════════════════════════════════════════════
 # PILLAR 3: Business Development
@@ -121,7 +121,7 @@ business_development:
     #   from: "Partner Jane Smith"
     #   context: "Quarterly review"
     #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
-    #   sentiment: positive  # positive | constructive | negative
+    #   type: peer | upward | client | review   # source context, not judgment
 
 # ═══════════════════════════════════════════════
 # PILLAR 4: Thought Leadership & Market Presence
@@ -155,7 +155,7 @@ thought_leadership:
     #   from: "Partner Jane Smith"
     #   context: "Quarterly review"
     #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
-    #   sentiment: positive  # positive | constructive | negative
+    #   type: peer | upward | client | review   # source context, not judgment
 
 # ═══════════════════════════════════════════════
 # PILLAR 5: Operational Excellence
@@ -177,13 +177,14 @@ operations:
     #   from: "Partner Jane Smith"
     #   context: "Quarterly review"
     #   quote: "Alfred's architecture work on Client X was the best I've seen this year"
-    #   sentiment: positive  # positive | constructive | negative
+    #   type: peer | upward | client | review   # source context, not judgment
 
 # ═══════════════════════════════════════════════
 # INTERNAL RELATIONSHIPS
 # ═══════════════════════════════════════════════
-# Track your political capital. Who knows you, who sponsors you,
-# who brings you into deals. This is as important as delivery.
+# Your professional network and development relationships.
+# Who mentors you, who do you collaborate with, who can you
+# learn from. Strong networks accelerate growth and impact.
 
 relationships:
   sponsor:
@@ -199,14 +200,14 @@ relationships:
     #   relationship: "strong"  # strong | building | cold
     #   how_connected: "Led delivery on their Client Y engagement"
     #   last_interaction: "2026-06-01"
-    #   can_help_with: "BD introductions, promotion vote"
+    #   can_help_with: "Cross-practice collaboration, joint client work"
 
   key_peers:
     # Fellow managers who you collaborate with
     # - name: "Manager Y"
     #   team: "Cloud Engineering"
     #   relationship: "strong"
-    #   notes: "Cross-staffs on data + cloud deals"
+    #   notes: "Collaborates on data + cloud projects"
 
   networking_goals:
     # - "Meet 2 partners outside my service line per quarter"

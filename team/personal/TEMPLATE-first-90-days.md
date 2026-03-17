@@ -13,6 +13,7 @@
 - [ ] Map the org chart: who makes decisions, who influences, who blocks
 - [ ] Understand the firm's data practice: what services are sold, to whom
 - [ ] Get access to all systems (time tracking, project management, knowledge base)
+- [ ] Learn the firm's stated values and how people reference them in conversations and reviews
 - [ ] Identify the top 3 revenue-generating engagements in your team/practice
 
 ### Week 3-4: Team & Client Assessment
@@ -76,7 +77,7 @@
 
 - **Heads-down coder trap** — You're a manager now. If you're writing code 80% of the time, you're not managing. Target: 40% delivery, 30% people, 20% BD, 10% admin.
 - **Waiting to be staffed** — Don't wait for work. Go find it. Talk to partners.
-- **Ignoring politics** — In consulting, relationships = career. Map the power structure early.
+- **Not building relationships** — In consulting, your professional network determines your opportunities. Understand who the key people are and build genuine connections early.
 - **Not tracking evidence** — If it's not written down, it didn't happen at review time.
 - **Saying yes to everything** — Utilization above 90% means no bandwidth for BD or leadership. Push back.
 - **Skipping 1:1s** — Your people are your promotion evidence. Invest in them.

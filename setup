@@ -67,6 +67,9 @@ case "$MODE" in
         echo "    2. Run: ssh-setup           ← generate SSH key for GitHub"
         echo "    3. Run: onboard <repo-url>  ← clone + setup any project"
         echo ""
+        echo "  Note: Some installs use curl-pipe-sh (starship, uv, Docker)."
+        echo "  Review your firm's security policy on external package sources."
+        echo ""
         ;;
     lowpower)
         echo ""
@@ -89,6 +92,9 @@ case "$MODE" in
         echo "    2. Run: ssh-setup           ← generate SSH key for GitHub"
         echo "    3. Run: tmux → nvim         ← start editing"
         echo "    4. Run: onboard <repo-url>  ← clone + setup any project"
+        echo ""
+        echo "  Note: Some installs use curl-pipe-sh (starship, uv, Docker)."
+        echo "  Review your firm's security policy on external package sources."
         echo ""
         ;;
     uninstall)

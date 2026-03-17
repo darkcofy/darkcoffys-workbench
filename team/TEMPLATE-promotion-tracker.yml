@@ -46,6 +46,7 @@ delivery:
     # - date: "2026-06-15"
     #   what: "Led architecture review for Client X migration"
     #   impact: "Identified $200K savings by consolidating 3 pipelines"
+    #   corroborating: "SOW-12345, PR #89, email from client PM 2026-06-20"
 
   feedback_received:
     # - date: "2026-06-15"
@@ -81,6 +82,7 @@ people:
     # - date: "2026-08-01"
     #   what: "Sarah led her first client architecture workshop"
     #   impact: "Client gave positive feedback, she's on track for promotion"
+    #   corroborating: "Sarah's promotion case, workshop feedback survey"
     # - date: "2026-09-15"
     #   what: "Ran dbt best practices lunch-and-learn (15 attendees)"
 
@@ -115,6 +117,7 @@ business_development:
     # - date: "2026-06-20"
     #   what: "Identified dbt migration opportunity at Client Y during delivery"
     #   impact: "Led to $200K proposal, won in August"
+    #   corroborating: "Proposal doc SOW-67890, signed contract 2026-08-15"
 
   feedback_received:
     # - date: "2026-06-15"
@@ -168,6 +171,7 @@ operations:
     # - date: "2026-05-01"
     #   what: "Standardized CI/CD pipeline across 3 client engagements"
     #   impact: "Reduced deployment errors by 80%, saved 10 hrs/week"
+    #   corroborating: "CI/CD pipeline repo, incident log reduction metrics"
     # - date: "2026-07-15"
     #   what: "Created data quality monitoring framework (reusable)"
     #   impact: "Adopted by 2 other teams, prevented 3 client incidents"
@@ -238,3 +242,50 @@ quarterly_reviews:
   #     - "Start writing internal playbook on data mesh patterns"
   #   blockers:
   #     - "100% on delivery — no bandwidth for BD. Discuss with counselor."
+
+# ═══════════════════════════════════════════════
+# PROMOTION NARRATIVE
+# ═══════════════════════════════════════════════
+# The 3-5 sentence story that ties your evidence together.
+# This is what your sponsor will say in the promotion committee.
+# Write it, refine it quarterly, and practice saying it aloud.
+
+narrative: |
+  # Example:
+  # "I joined as a manager focused on dbt delivery and within 12 months
+  # expanded into architecture leadership across 3 clients, managing $1.2M
+  # in engagements. I developed 2 analysts for promotion, contributed to
+  # $400K in new business including a cross-sell that became our largest
+  # data quality engagement, and created the firm's reusable dbt accelerator
+  # now used by 5 teams across the practice."
+
+# ═══════════════════════════════════════════════
+# READINESS CHECKLIST
+# ═══════════════════════════════════════════════
+# Map to your firm's actual promotion criteria.
+# Check these off before telling your counselor you're ready.
+
+readiness:
+  delivery:
+    - # "Led 2+ engagements independently (not just contributed)"
+    - # "Managed $1M+ in total engagement value"
+    - # "Client satisfaction consistently 4+/5"
+    - # "No at-risk engagements under my watch (or resolved them)"
+  people:
+    - # "Managing 5+ direct reports"
+    - # "Developed 2+ people for promotion"
+    - # "Recognized as a mentor (not just assigned)"
+  business_development:
+    - # "Contributed to $500K+ in pipeline"
+    - # "Won $200K+ in new or extended work"
+    - # "Can independently price and scope a proposal"
+  thought_leadership:
+    - # "2+ visible contributions (talks, accelerators, publications)"
+    - # "Known for something specific across the practice"
+  operations:
+    - # "Created a reusable asset adopted by other teams"
+    - # "Measurable efficiency improvement"
+  sponsor_alignment:
+    - # "Counselor agrees I'm ready"
+    - # "Sponsor will actively advocate in promotion committee"
+    - # "No known blockers or concerns from leadership"

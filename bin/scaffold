@@ -121,6 +121,7 @@ fi
 if [[ ! -f "domain-ownership.yml" ]] && ($HAS_SQL || $HAS_DBT); then
     if [[ -f "$WORKBENCH_DIR/agents/templates/domain-ownership.yml" ]]; then
         cp "$WORKBENCH_DIR/agents/templates/domain-ownership.yml" domain-ownership.yml
+        { echo "# NOTE: This maps the CLIENT's data domains and owners, not your consulting team."; echo "# Your internal team tracking goes in darkcoffys-workbench/team/"; cat domain-ownership.yml; } > domain-ownership.yml.tmp && mv domain-ownership.yml.tmp domain-ownership.yml
         info "Created domain-ownership.yml (fill in owners and stakeholders)"
     else
         warn "Template missing: agents/templates/domain-ownership.yml"
@@ -533,6 +534,15 @@ if $HAS_SQL || $HAS_DBT; then
         skip "sqlprism config"
     fi
 fi
+
+# ── Client repo warning ──
+echo ""
+echo -e "  ${YELLOW}Note for client projects:${RESET}"
+echo -e "  ${DIM}  Before committing AI instruction files (CLAUDE.md, .cursorrules, etc.)${RESET}"
+echo -e "  ${DIM}  check your client's AI acceptable use policy.${RESET}"
+echo -e "  ${DIM}  .artifacts/ and agents/ contain internal working files —${RESET}"
+echo -e "  ${DIM}  consider adding them to .gitignore on client repos.${RESET}"
+echo ""
 
 # ── Summary ──
 echo ""

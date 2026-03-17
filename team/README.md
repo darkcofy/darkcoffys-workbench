@@ -226,6 +226,17 @@ If you operate in the UK, EU, or Australia (or manage people there), be aware:
 - Keep notes factual and behavior-based, not judgmental
 - When in doubt, ask: "Would I be comfortable if this person read this note?"
 
+### Data classification
+
+Treat files in this system according to their sensitivity:
+
+| Classification | Files | Handling |
+|---------------|-------|----------|
+| **Public** | Templates (TEMPLATE-*), README, CHEATSHEET | Safe to commit to public repos |
+| **Internal** | Shell configs, neovim config, git aliases | Safe to commit, no sensitive data |
+| **Confidential** | Engagement trackers, 1:1 notes, promotion tracker | Gitignored, encrypt at rest, firm devices only |
+| **Restricted** | Client names + budgets in engagement files | Gitignored, encrypt, never on personal devices if firm policy prohibits |
+
 ### Recommended: encrypt sensitive files
 
 For extra protection, use `age` or `git-crypt`:

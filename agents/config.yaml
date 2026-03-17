@@ -34,10 +34,14 @@ sdlc:
   # Database / MCP
   mcp:
     enabled: false
+    # ⚠️  NEVER put real credentials here. Use environment variables:
+    #   - name: postgres
+    #     command: "mcp-server-postgres"
+    #     args: ["$DATABASE_URL"]  # set DATABASE_URL in .env
     # servers:
     #   - name: postgres
     #     command: "mcp-server-postgres"
-    #     args: ["postgresql://localhost:5432/mydb"]
+    #     args: ["$DATABASE_URL"]
     #   - name: sqlite
     #     command: "mcp-server-sqlite"
     #     args: ["./data/app.db"]

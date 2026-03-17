@@ -73,7 +73,14 @@ darkcoffys-workbench/
 │   ├── research.md          ← Socratic first-principles research agent
 │   ├── sdlc.md              ← full dev lifecycle agent
 │   ├── artifacts.md         ← where agents store generated files
+│   ├── impact-analysis.md   ← pre-change impact analysis agent
 │   └── templates/           ← project scaffolding templates
+│       ├── design-review.md         ← design review template
+│       ├── modeling-conventions.md  ← data modeling standards
+│       ├── data-quality.yml         ← dbt test patterns
+│       ├── domain-ownership.yml     ← ownership & stakeholder map
+│       ├── adrs/000-template.md     ← ADR template
+│       ├── runbooks/data-incident.md← incident response playbook
 │       ├── sqlfluff.cfg     ← SQL linter config
 │       ├── env.template     ← .env skeleton
 │       ├── envrc            ← direnv config
@@ -338,7 +345,7 @@ All aliases are loaded automatically via `shell/rc.sh`.
 
 ## AI Agent System
 
-When you run `scaffold .` in a project, it sets up three agents and generates instruction files for **every major AI coding tool** — Claude Code, Cursor, GitHub Copilot, Windsurf, Cline, and OpenAI Codex. All point to the same `agents/` directory, so your team can use different tools and still follow the same workflow.
+When you run `scaffold .` in a project, it sets up four agents, a governance layer, and generates instruction files for **every major AI coding tool** — Claude Code, Cursor, GitHub Copilot, Windsurf, Cline, and OpenAI Codex. All point to the same `agents/` directory, so your team can use different tools and still follow the same workflow.
 
 ### Research Agent (`agents/research.md`)
 
@@ -359,11 +366,12 @@ Outputs go to `.artifacts/research/YYYY-MM-DD_<slug>.md` in a structured format 
 Full development lifecycle:
 
 ```
-1. INGEST    Read issue from ticket engine (GitHub/Jira/Linear)
-2. PLAN      Break into tasks → save as .artifacts/tasks/<id>/tasks.json
-3. EXECUTE   Work tasks by parallel group, commit after each
-4. VERIFY    Full lint + test suite
-5. DELIVER   Push branch, create PR, update ticket
+1. INGEST         Read issue from ticket engine (GitHub/Jira/Linear)
+2. DESIGN REVIEW  For significant changes: fill out design review, run impact analysis
+3. PLAN           Break into tasks → save as .artifacts/tasks/<id>/tasks.json
+4. EXECUTE        Work tasks by parallel group, commit after each
+5. VERIFY         Full lint + test suite
+6. DELIVER        Push branch, create PR, update ticket
 ```
 
 Task list format (`.artifacts/tasks/<issue-id>/tasks.json`):
@@ -382,6 +390,17 @@ Task list format (`.artifacts/tasks/<issue-id>/tasks.json`):
   ]
 }
 ```
+
+### Impact Analysis Agent (`agents/impact-analysis.md`)
+
+Runs before any data model change. Uses sqlprism to trace downstream dependencies, cross-references `domain-ownership.yml` for stakeholder notification, and classifies risk:
+
+| Risk | Criteria | Action |
+|------|----------|--------|
+| Low | Additive, no breakage | Proceed, notify in PR |
+| Medium | Downstream needs updating | Update in same PR, notify owners |
+| High | Dashboards/reports break | Design review + migration plan + 2-week notice |
+| Critical | Revenue/customer-facing | ADR + VP approval + coordinated rollout |
 
 ### Artifacts Agent (`agents/artifacts.md`)
 
@@ -403,6 +422,72 @@ Edit this per-project to configure:
 - **MCP connections** — database servers
 - **GitHub** — auto-PR, reviewers
 - **Research** — max depth, first-principles questions
+
+---
+
+## Data Governance
+
+For SQL/dbt projects, `scaffold` also creates a governance layer at the project root:
+
+### Architecture Decision Records (`adrs/` + template)
+
+Track *why* decisions were made. Template at `agents/templates/adrs/000-template.md`. Use for:
+- Choosing between modeling approaches (star schema vs OBT)
+- Warehouse/tool selection (Snowflake vs Postgres vs BigQuery)
+- SCD strategy decisions
+- Breaking changes
+
+```bash
+# Create a new ADR
+cp agents/templates/adrs/000-template.md adrs/001-use-incremental-for-events.md
+```
+
+### Modeling Conventions (`modeling-conventions.md`)
+
+Single source of truth for your team's standards:
+- **Schema layers** — source, staging, intermediate, fact, dimension, metric
+- **Naming rules** — snake_case, prefixes (`stg_`, `fct_`, `dim_`), column suffixes (`_at`, `_id`, `_amount`)
+- **Grain documentation** — every model must document its grain
+- **SCD strategy** — default Type 1, Type 2 only with ADR
+- **Materialization strategy** — views for staging, tables for facts, incremental when >10M rows
+- **Testing requirements** — minimum tests per layer
+
+### Design Review (`agents/templates/design-review.md`)
+
+Fill out before building significant features. Covers:
+- Entity relationships and proposed models
+- Key columns and business logic
+- SCD strategy per entity
+- Impact analysis (downstream + stakeholders)
+- Testing plan and rollout plan
+
+### Data Quality Patterns (`agents/templates/data-quality.yml`)
+
+Ready-to-use dbt test patterns:
+- Source freshness thresholds (realtime, daily batch, weekly)
+- Volume anomaly detection
+- Distribution checks (null rates, enum stability, numeric ranges)
+- Referential integrity
+- Cross-database consistency
+- Schema drift detection
+
+### Incident Runbook (`agents/templates/runbooks/data-incident.md`)
+
+Step-by-step playbook:
+1. **Assess** — what's broken, blast radius, severity (P1-P4)
+2. **Diagnose** — freshness, pipeline status, data correctness, dbt errors
+3. **Communicate** — notification template + stakeholder contacts
+4. **Fix** — quick fixes and code change workflow
+5. **Verify** — confirmation checklist
+6. **Post-mortem** — timeline, root cause, action items (P1/P2 only)
+
+### Domain Ownership (`domain-ownership.yml`)
+
+Maps who owns what — **fill in the `HINT` placeholders**:
+- **Domains** — finance, product, marketing (models, dashboards, SLAs, owners)
+- **Platform team** — on-call rotation, escalation path
+- **Source systems** — system owner, integration method, schema change notification
+- **Change notification rules** — who to notify for breaking changes, new models, deprecations
 
 ---
 

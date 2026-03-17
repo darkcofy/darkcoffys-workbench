@@ -66,7 +66,7 @@ else
 fi
 
 # Copy agent instruction files
-for agent_file in research.md sdlc.md artifacts.md; do
+for agent_file in research.md sdlc.md artifacts.md impact-analysis.md; do
     if [[ ! -f "agents/$agent_file" ]]; then
         cp "$WORKBENCH_DIR/agents/$agent_file" "agents/$agent_file"
         info "Created agents/$agent_file"
@@ -75,10 +75,45 @@ for agent_file in research.md sdlc.md artifacts.md; do
     fi
 done
 
+# Copy governance templates
+step "Setting up governance templates..."
+mkdir -p agents/templates/adrs agents/templates/runbooks
+
+for tmpl in design-review.md modeling-conventions.md data-quality.yml domain-ownership.yml; do
+    if [[ ! -f "agents/templates/$tmpl" ]] && [[ -f "$WORKBENCH_DIR/agents/templates/$tmpl" ]]; then
+        cp "$WORKBENCH_DIR/agents/templates/$tmpl" "agents/templates/$tmpl"
+        info "Created agents/templates/$tmpl"
+    fi
+done
+
+# ADR template
+if [[ ! -f "agents/templates/adrs/000-template.md" ]]; then
+    cp "$WORKBENCH_DIR/agents/templates/adrs/000-template.md" "agents/templates/adrs/000-template.md"
+    info "Created agents/templates/adrs/000-template.md"
+fi
+
+# Runbook
+if [[ ! -f "agents/templates/runbooks/data-incident.md" ]]; then
+    cp "$WORKBENCH_DIR/agents/templates/runbooks/data-incident.md" "agents/templates/runbooks/data-incident.md"
+    info "Created agents/templates/runbooks/data-incident.md"
+fi
+
+# Domain ownership (project root — this is a living doc, not a template)
+if [[ ! -f "domain-ownership.yml" ]] && ($HAS_SQL || $HAS_DBT); then
+    cp "$WORKBENCH_DIR/agents/templates/domain-ownership.yml" domain-ownership.yml
+    info "Created domain-ownership.yml (fill in owners and stakeholders)"
+fi
+
+# Modeling conventions (project root)
+if [[ ! -f "modeling-conventions.md" ]] && ($HAS_SQL || $HAS_DBT); then
+    cp "$WORKBENCH_DIR/agents/templates/modeling-conventions.md" modeling-conventions.md
+    info "Created modeling-conventions.md (review and adjust for your org)"
+fi
+
 # ── 2. Artifact directories ──
 step "Creating artifact directories..."
-mkdir -p .artifacts/{research,tasks,reports,scratch}
-info "Created .artifacts/{research,tasks,reports,scratch}"
+mkdir -p .artifacts/{research,tasks,reports,scratch} adrs
+info "Created .artifacts/{research,tasks,reports,scratch} + adrs/"
 
 # ── 3. Gitignore for artifacts ──
 if [[ -f ".gitignore" ]]; then
@@ -164,20 +199,35 @@ step "Setting up AI tool instructions..."
 # Shared instruction block used by all non-CLAUDE.md tools
 AGENT_INSTRUCTIONS='Read the following files before starting any work:
 
+## Agent Workflows
 - `agents/config.yaml` — paths, connections, and behavior settings
 - `agents/research.md` — research workflow (Socratic/first-principles decomposition)
 - `agents/sdlc.md` — development lifecycle (issue → task list → parallel execution → commit → PR)
 - `agents/artifacts.md` — where to store all generated files
+- `agents/impact-analysis.md` — run before modifying any existing data model
+
+## Governance (if present in project root)
+- `domain-ownership.yml` — who owns which models, notification rules
+- `modeling-conventions.md` — naming standards, schema layers, testing requirements
+
+## Templates (in `agents/templates/`)
+- `design-review.md` — fill out before building significant features
+- `adrs/000-template.md` — architecture decision records
+- `data-quality.yml` — testing patterns for dbt
+- `runbooks/data-incident.md` — incident response playbook
 
 ## Workflow Rules
 
 1. For research/exploration: follow `agents/research.md`
 2. For implementation: follow `agents/sdlc.md`
-3. Save all outputs per `agents/config.yaml` paths
-4. Run `make lint` before every commit
-5. Run `make test` before marking tasks complete
-6. Commit after every completed task, not at the end
-7. Never push to main directly — use feature branches'
+3. For data model changes: run impact analysis first (`agents/impact-analysis.md`)
+4. For significant new features: fill out design review before coding
+5. Save all outputs per `agents/config.yaml` paths
+6. Run `make lint` before every commit
+7. Run `make test` before marking tasks complete
+8. Commit after every completed task, not at the end
+9. Never push to main directly — use feature branches
+10. Check `domain-ownership.yml` before modifying shared models'
 
 # Cursor
 if [[ ! -f ".cursorrules" ]]; then
@@ -444,28 +494,39 @@ echo "  ────────────────────────
 echo -e "  ${GREEN}Scaffold complete${RESET}"
 echo ""
 echo -e "  ${CYAN}What was set up:${RESET}"
-echo "    agents/config.yaml       ← edit connections & paths"
-echo "    agents/research.md       ← research agent instructions"
-echo "    agents/sdlc.md           ← SDLC agent instructions"
-echo "    agents/artifacts.md      ← artifact storage rules"
-echo "    .artifacts/              ← output directories"
-echo "    CLAUDE.md                ← Claude Code instructions"
-echo "    .cursorrules             ← Cursor instructions"
-echo "    .cursor/rules/agents.mdc ← Cursor v2 instructions"
-echo "    .github/copilot-*        ← GitHub Copilot instructions"
-echo "    .windsurfrules           ← Windsurf instructions"
-echo "    .clinerules              ← Cline instructions"
-echo "    AGENTS.md                ← OpenAI Codex instructions"
-echo "    Makefile                 ← standard targets (lint/fmt/test)"
-echo "    .envrc + .env.template   ← environment management (direnv)"
-($HAS_SQL || $HAS_DBT) && echo "    .sqlfluff                ← SQL linter config"
-($HAS_SQL || $HAS_DBT) && echo "    sqlprism.yml             ← SQL indexing config"
-$HAS_DBT && echo "    dbt targets              ← make dbt-build, dbt-test, etc."
+echo ""
+echo "    Agent workflows:"
+echo "      agents/config.yaml          ← edit connections & paths"
+echo "      agents/research.md          ← research agent"
+echo "      agents/sdlc.md              ← SDLC agent"
+echo "      agents/artifacts.md         ← artifact storage rules"
+echo "      agents/impact-analysis.md   ← impact analysis agent"
+echo ""
+echo "    Governance:"
+($HAS_SQL || $HAS_DBT) && echo "      domain-ownership.yml         ← fill in owners & stakeholders"
+($HAS_SQL || $HAS_DBT) && echo "      modeling-conventions.md       ← review & adjust naming/standards"
+echo "      agents/templates/adrs/       ← architecture decision records"
+echo "      agents/templates/design-review.md"
+echo "      agents/templates/data-quality.yml"
+echo "      agents/templates/runbooks/   ← incident response playbook"
+echo ""
+echo "    AI tool instructions:"
+echo "      CLAUDE.md, .cursorrules, .cursor/rules/, .github/copilot-*,"
+echo "      .windsurfrules, .clinerules, AGENTS.md"
+echo ""
+echo "    Dev tooling:"
+echo "      Makefile                     ← standard targets (lint/fmt/test)"
+echo "      .envrc + .env.template       ← environment management"
+($HAS_SQL || $HAS_DBT) && echo "      .sqlfluff                    ← SQL linter config"
+($HAS_SQL || $HAS_DBT) && echo "      sqlprism.yml                 ← SQL indexing config"
+$HAS_DBT && echo "      dbt targets                  ← make dbt-build, dbt-test, etc."
 echo ""
 echo -e "  ${YELLOW}Next steps:${RESET}"
-echo "    1. cp .env.template .env — fill in your credentials"
+echo "    1. cp .env.template .env — fill in credentials"
 echo "    2. direnv allow — auto-load env vars"
-echo "    3. Edit agents/config.yaml — set your ticket engine, DB, etc."
-($HAS_SQL || $HAS_DBT) && echo "    4. Edit sqlprism.yml — configure SQL paths, then: sqlprism reindex"
-echo "    5. Start working: agents will follow the SDLC workflow"
+echo "    3. Edit agents/config.yaml — set ticket engine, DB, etc."
+($HAS_SQL || $HAS_DBT) && echo "    4. Fill in domain-ownership.yml — who owns what"
+($HAS_SQL || $HAS_DBT) && echo "    5. Review modeling-conventions.md — adjust for your org"
+($HAS_SQL || $HAS_DBT) && echo "    6. Edit sqlprism.yml, then: sqlprism reindex"
+echo "    7. Start working: agents follow the SDLC workflow"
 echo ""

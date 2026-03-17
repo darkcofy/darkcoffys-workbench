@@ -2,7 +2,11 @@
 
 You are a software development lifecycle agent. You take issues from a ticket engine, break them into tasks, execute them systematically, and commit at each stage.
 
-Read `agents/config.yaml` at the start of every session to determine connections, paths, and behavior settings.
+Read these files at the start of every session:
+- `agents/config.yaml` — connections, paths, behavior settings
+- `agents/impact-analysis.md` — impact analysis workflow (required for data model changes)
+- `domain-ownership.yml` — who owns what (if present in project root)
+- `modeling-conventions.md` — naming and modeling standards (if present in project root)
 
 ## Workflow
 
@@ -12,6 +16,18 @@ Read `agents/config.yaml` at the start of every session to determine connections
 2. Read the full description, acceptance criteria, and any linked issues
 3. If the issue is unclear, use the Research Agent (`agents/research.md`) to decompose it first
 4. Save the raw issue to `.artifacts/tasks/<issue-id>/issue.json`
+
+### Stage 1.5: Design Review (for significant changes)
+
+If the issue involves new data models, schema changes, or changes to existing model logic:
+
+1. Fill out a design review using the template in `agents/templates/design-review.md`
+2. Save to `.artifacts/tasks/<issue-id>/design-review.md`
+3. Run impact analysis per `agents/impact-analysis.md` for any model modifications
+4. If impact is **high** or **critical**: stop and require human approval before proceeding
+5. If impact is **low** or **medium**: proceed, but include the impact report in the PR
+
+Skip this stage for: bug fixes, documentation, test-only changes, config changes.
 
 ### Stage 2: Plan — Create Task List
 

@@ -1,0 +1,146 @@
+# ──────────────────────────────────────────────
+# Domain Ownership & Stakeholder Map
+# ──────────────────────────────────────────────
+# Who owns what, who consumes what, who to notify on changes.
+# Scaffold into your project root and fill in.
+#
+# Used by:
+#   - SDLC agent: knows who to tag on PRs
+#   - Research agent: knows who to ask domain questions
+#   - Runbook: knows who to notify on incidents
+# ──────────────────────────────────────────────
+
+# ── Domains ──
+# Group your data models by business domain.
+domains:
+
+  finance:
+    description: "Revenue, billing, invoicing, payments"
+    owner: # HINT: e.g., "jane@company.com" or "Jane Smith (Sr. Analytics Engineer)"
+    stakeholders:
+      - # HINT: e.g., "CFO — consumes revenue dashboards"
+      - # HINT: e.g., "FP&A team — monthly reporting"
+    models:
+      - stg_stripe__*
+      - fct_payments
+      - fct_invoices
+      - dim_customers
+      - mrt_revenue__*
+    dashboards:
+      - # HINT: e.g., "Revenue Overview (Looker #42)"
+      - # HINT: e.g., "MRR Dashboard (Metabase /dashboard/17)"
+    sla: # HINT: e.g., "Available by 6:00 AM UTC, refreshed daily"
+    notification_channel: # HINT: e.g., "#data-finance-alerts"
+    severity_on_failure: P1  # P1-P4
+
+  product:
+    description: "User events, feature usage, activation, retention"
+    owner: # HINT: fill in
+    stakeholders:
+      - # HINT: e.g., "Product managers — feature adoption reports"
+      - # HINT: e.g., "Growth team — activation funnel"
+    models:
+      - stg_app__events
+      - stg_app__users
+      - int_events__sessionized
+      - fct_sessions
+      - fct_user_activity
+      - dim_users
+    dashboards:
+      - # HINT: e.g., "Product KPIs (Looker #58)"
+    sla: # HINT: fill in
+    notification_channel: # HINT: fill in
+    severity_on_failure: P2
+
+  marketing:
+    description: "Campaigns, attribution, lead gen, ad spend"
+    owner: # HINT: fill in
+    stakeholders:
+      - # HINT: e.g., "Marketing ops — campaign ROI"
+      - # HINT: e.g., "Demand gen — lead funnel"
+    models:
+      - stg_hubspot__*
+      - stg_google_ads__*
+      - fct_campaigns
+      - fct_attribution
+      - dim_channels
+    dashboards:
+      - # HINT: fill in
+    sla: # HINT: fill in
+    notification_channel: # HINT: fill in
+    severity_on_failure: P2
+
+  # HINT: Add more domains as needed. Common ones:
+  #
+  # operations:
+  #   description: "Supply chain, logistics, inventory"
+  #
+  # people:
+  #   description: "HR data, headcount, hiring pipeline"
+  #
+  # support:
+  #   description: "Tickets, CSAT, SLA tracking"
+
+# ── Data Platform Team ──
+# Who maintains the infrastructure, pipelines, and tooling.
+platform:
+  team:
+    - # HINT: e.g., "alfred@company.com (Data Engineer)"
+    - # HINT: e.g., "sarah@company.com (Analytics Engineer)"
+  on_call_rotation: # HINT: e.g., "PagerDuty schedule: data-eng-oncall"
+  escalation:
+    - # HINT: e.g., "Step 1: #data-eng Slack channel"
+    - # HINT: e.g., "Step 2: Page on-call via PagerDuty"
+    - # HINT: e.g., "Step 3: Escalate to data-eng manager"
+
+# ── Source Systems ──
+# Who owns the upstream systems that feed your data platform.
+sources:
+
+  stripe:
+    system_owner: # HINT: e.g., "Backend team / payments squad"
+    contact: # HINT: e.g., "payments@company.com"
+    integration: # HINT: e.g., "Fivetran connector"
+    schema_change_notification: # HINT: e.g., "Fivetran alerts → #data-eng"
+    notes: # HINT: e.g., "Schema changes happen on Stripe API version bumps"
+
+  app_database:
+    system_owner: # HINT: e.g., "Backend team"
+    contact: # HINT: fill in
+    integration: # HINT: e.g., "Airbyte CDC from PostgreSQL replica"
+    schema_change_notification: # HINT: fill in
+    notes: # HINT: e.g., "Migrations happen Tue/Thu — watch for new columns"
+
+  hubspot:
+    system_owner: # HINT: e.g., "Marketing ops"
+    contact: # HINT: fill in
+    integration: # HINT: fill in
+    schema_change_notification: # HINT: fill in
+    notes: # HINT: fill in
+
+  # HINT: Add all your source systems. Common ones:
+  # salesforce, google_analytics, segment, snowplow, zendesk,
+  # postgres_replica, bigquery_export, s3_bucket, etc.
+
+# ── Change Notification Rules ──
+# When should stakeholders be notified about changes?
+change_notifications:
+  breaking_change:
+    # Column removed, renamed, type changed, grain changed
+    notify: [domain_owner, all_stakeholders, platform_team]
+    method: # HINT: e.g., "PR review required + Slack message"
+
+  new_model:
+    notify: [domain_owner]
+    method: # HINT: e.g., "PR review"
+
+  logic_change:
+    # Business logic modified in existing model
+    notify: [domain_owner, affected_stakeholders]
+    method: # HINT: e.g., "PR review + heads-up in domain channel"
+
+  deprecation:
+    # Model being removed or replaced
+    notify: [domain_owner, all_stakeholders, platform_team]
+    method: # HINT: e.g., "2-week notice in Slack + migration guide"
+    lead_time: "14 days"

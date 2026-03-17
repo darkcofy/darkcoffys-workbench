@@ -1,0 +1,129 @@
+# ──────────────────────────────────────────────
+# Data Quality Patterns
+# ──────────────────────────────────────────────
+# Copy relevant sections into your dbt schema.yml files.
+# These use dbt-expectations (install via packages.yml):
+#
+#   packages:
+#     - package: calogica/dbt_expectations
+#       version: [">=0.10.0", "<0.11.0"]
+#
+# HINT: Adjust thresholds per model based on your data characteristics.
+# These are starting points — tune after observing real data.
+
+# ─── Freshness checks ───
+# Add to your sources:
+sources_freshness:
+  realtime_source:
+    freshness:
+      warn_after: { count: 1, period: hour }
+      error_after: { count: 4, period: hour }
+    loaded_at_field: _loaded_at
+
+  daily_batch_source:
+    freshness:
+      warn_after: { count: 24, period: hour }
+      error_after: { count: 48, period: hour }
+    loaded_at_field: _etl_loaded_at
+
+  weekly_source:
+    freshness:
+      warn_after: { count: 7, period: day }
+      error_after: { count: 14, period: day }
+    loaded_at_field: _loaded_at
+
+# ─── Volume anomaly detection ───
+# Catches unexpected drops or spikes in row counts
+volume_tests:
+  # Fact tables: compare today's count to rolling average
+  - name: expect_table_row_count_to_be_between
+    config:
+      # HINT: Set min/max based on your table's normal range.
+      # Start wide (0.5x to 2x) and tighten over time.
+      min_value: 1000     # minimum expected rows
+      max_value: 1000000  # maximum expected rows
+      severity: warn
+
+  # Incremental models: check partition has rows
+  - name: expect_row_count_to_be_positive_for_recent_partition
+    config:
+      partition_column: created_date
+      lookback_days: 1
+      severity: error
+
+# ─── Distribution checks ───
+# Catches silent data quality issues (e.g., a source starts sending all nulls)
+distribution_tests:
+  # Null rate monitoring
+  - name: expect_column_values_to_not_be_null
+    config:
+      # HINT: Set row_condition for columns that are conditionally null.
+      # e.g., row_condition: "status = 'completed'"
+      mostly: 0.95  # allow 5% nulls
+
+  # Enum stability (catches new unexpected values)
+  - name: accepted_values
+    config:
+      values: ["pending", "active", "cancelled", "completed"]
+      # HINT: Add quote: true for string values in some warehouses
+
+  # Numeric range (catches unit/currency errors)
+  - name: expect_column_values_to_be_between
+    config:
+      min_value: 0
+      max_value: 100000  # HINT: Set realistic max for your domain
+      # row_condition: "amount is not null"
+
+  # Uniqueness ratio (for columns that should be mostly unique)
+  - name: expect_column_unique_value_count_to_be_between
+    config:
+      min_value: 100
+      # max_value: ...
+      # HINT: useful for detecting dedup failures
+
+# ─── Referential integrity ───
+referential_tests:
+  # Every FK should have a matching PK
+  - name: relationships
+    config:
+      to: ref('dim_customers')
+      field: customer_id
+      severity: error
+      # HINT: If you allow orphaned FKs (e.g., deleted customers),
+      # use severity: warn or add where clause
+
+# ─── Cross-database consistency ───
+# When the same entity exists in multiple systems
+consistency_tests:
+  - name: expect_row_count_to_equal_other_table
+    config:
+      # HINT: Compare counts between source and staging to catch ETL issues
+      compare_model: ref('src_stripe__customers')
+      # tolerance: 0.01  # allow 1% difference
+      severity: warn
+
+# ─── Timeliness / SLA checks ───
+# Add as custom tests or elementary monitors
+timeliness:
+  # HINT: Define your SLAs here and reference in runbooks
+  - model: fct_orders
+    sla: "Available by 6:00 AM UTC daily"
+    check: "max(created_at) > current_date - interval '4 hours'"
+
+  - model: mrt_revenue__daily
+    sla: "Available by 8:00 AM UTC daily"
+    check: "max(report_date) >= current_date - 1"
+
+# ─── Schema drift detection ───
+# Catches when source schemas change unexpectedly
+schema_tests:
+  - name: expect_table_columns_to_match_ordered_list
+    config:
+      # HINT: Generate this list from your current schema, then it alerts
+      # if columns are added/removed/reordered
+      column_list:
+        - id
+        - created_at
+        - updated_at
+        - status
+      severity: warn  # warn first, since sources do change

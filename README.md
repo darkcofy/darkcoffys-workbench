@@ -106,12 +106,12 @@ darkcoffys-workbench/
 ├── git/gitconfig            ← git aliases + defaults
 ├── vscode/                  ← VS Code settings + extensions
 ├── team/                    ← management & career tracking
-│   ├── promotion-tracker.yml← 5-pillar promotion evidence
-│   ├── roster.yml           ← skills matrix + capacity
+│   ├── TEMPLATE-promotion-tracker.yml ← copy to my-promotion-tracker.yml
+│   ├── TEMPLATE-roster.yml  ← copy to my-roster.yml
 │   ├── engagements/         ← per-client tracking
 │   ├── one-on-ones/         ← per-person 1:1 notes
 │   ├── weekly-status/       ← Friday status reports
-│   └── personal/            ← 90-day plan, career goals
+│   └── personal/            ← 90-day plan template
 └── CHEATSHEET.md            ← keybinding reference
 ```
 
@@ -599,8 +599,8 @@ team-status 1on1         # 1:1 note history
 
 | File | Purpose |
 |------|---------|
-| `team/promotion-tracker.yml` | Track evidence against 5 promotion pillars: delivery, people, BD, thought leadership, operations |
-| `team/roster.yml` | Team skills matrix (1-5 ratings), capacity, development goals, certifications |
+| `team/TEMPLATE-promotion-tracker.yml` | Track evidence against 5 promotion pillars (copy to `my-promotion-tracker.yml`) |
+| `team/TEMPLATE-roster.yml` | Team skills matrix, capacity, development goals (copy to `my-roster.yml`) |
 | `team/engagements/` | Per-client: budget burn rate, deliverables, risks, stakeholders, scope changes |
 | `team/one-on-ones/` | Per-person 1:1 notes — your memory for reviews and promotions |
 | `team/weekly-status/` | Friday status report template (RAG, budget, risks, BD pipeline) |

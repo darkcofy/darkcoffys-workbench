@@ -44,13 +44,32 @@ if command -v fzf &>/dev/null; then
     # fzf 0.48+ uses this method
     if [[ "$DCWS_SHELL" == "zsh" ]]; then
         source <(fzf --zsh 2>/dev/null) || {
-            # Fallback for older fzf
-            [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]] && source /usr/share/doc/fzf/examples/key-bindings.zsh
-            [[ -f /usr/share/doc/fzf/examples/completion.zsh ]] && source /usr/share/doc/fzf/examples/completion.zsh
+            # Fallback: search known paths for fzf shell integration
+            for fzf_path in \
+                /usr/share/doc/fzf/examples \
+                /usr/share/fzf \
+                /opt/homebrew/opt/fzf/shell \
+                /usr/local/opt/fzf/shell; do
+                if [[ -d "$fzf_path" ]]; then
+                    [[ -f "$fzf_path/key-bindings.zsh" ]] && source "$fzf_path/key-bindings.zsh"
+                    [[ -f "$fzf_path/completion.zsh" ]] && source "$fzf_path/completion.zsh"
+                    break
+                fi
+            done
         }
     elif [[ "$DCWS_SHELL" == "bash" ]]; then
         eval "$(fzf --bash 2>/dev/null)" || {
-            [[ -f /usr/share/doc/fzf/examples/key-bindings.bash ]] && source /usr/share/doc/fzf/examples/key-bindings.bash
+            # Fallback: search known paths for fzf shell integration
+            for fzf_path in \
+                /usr/share/doc/fzf/examples \
+                /usr/share/fzf \
+                /opt/homebrew/opt/fzf/shell \
+                /usr/local/opt/fzf/shell; do
+                if [[ -d "$fzf_path" ]]; then
+                    [[ -f "$fzf_path/key-bindings.bash" ]] && source "$fzf_path/key-bindings.bash"
+                    break
+                fi
+            done
         }
     fi
 fi

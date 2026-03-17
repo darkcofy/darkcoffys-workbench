@@ -12,15 +12,20 @@ set -euo pipefail
 #   ssh-setup your@email.com      Specify email
 # ──────────────────────────────────────────────
 
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-DIM='\033[2m'
-RESET='\033[0m'
+# Resolve symlinks portably (works on both Linux and macOS)
+resolve_path() {
+    local target="$1"
+    while [ -L "$target" ]; do
+        local dir="$(cd "$(dirname "$target")" && pwd)"
+        target="$(readlink "$target")"
+        [[ "$target" != /* ]] && target="$dir/$target"
+    done
+    echo "$(cd "$(dirname "$target")" && pwd)/$(basename "$target")"
+}
+SCRIPT_PATH="$(resolve_path "${BASH_SOURCE[0]}")"
+WORKBENCH_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 
-info()  { echo -e "${GREEN}  ✓ $*${RESET}"; }
-warn()  { echo -e "${YELLOW}  → $*${RESET}"; }
-step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
+source "$WORKBENCH_DIR/lib/common.sh"
 
 echo ""
 echo -e "  ${CYAN}darkcoffys ssh-setup${RESET}"

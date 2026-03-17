@@ -9,21 +9,34 @@ set -euo pipefail
 # Usage:
 #   sqlprism-init              Setup in current directory
 #   sqlprism-init /path/to/dir Setup in specified directory
+#   sqlprism-init --force      Skip interactive prompts
+#   sqlprism-init -f           Skip interactive prompts
 # ──────────────────────────────────────────────
 
-TARGET="${1:-.}"
+# Resolve symlinks portably (works on both Linux and macOS)
+resolve_path() {
+    local target="$1"
+    while [ -L "$target" ]; do
+        local dir="$(cd "$(dirname "$target")" && pwd)"
+        target="$(readlink "$target")"
+        [[ "$target" != /* ]] && target="$dir/$target"
+    done
+    echo "$(cd "$(dirname "$target")" && pwd)/$(basename "$target")"
+}
+SCRIPT_PATH="$(resolve_path "${BASH_SOURCE[0]}")"
+WORKBENCH_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-DIM='\033[2m'
-RED='\033[0;31m'
-RESET='\033[0m'
+source "$WORKBENCH_DIR/lib/common.sh"
 
-info()  { echo -e "${GREEN}  ✓ $*${RESET}"; }
-warn()  { echo -e "${YELLOW}  → $*${RESET}"; }
-step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
-err()   { echo -e "${RED}  ✗ $*${RESET}"; }
+# ── Parse args ──
+TARGET="."
+FORCE=false
+for arg in "$@"; do
+    case "$arg" in
+        --force|-f) FORCE=true ;;
+        *)          TARGET="$arg" ;;
+    esac
+done
 
 cd "$TARGET"
 
@@ -41,8 +54,10 @@ HAS_DBT=false
 if [[ "$SQL_COUNT" -eq 0 ]] && ! $HAS_DBT; then
     warn "No SQL files or dbt_project.yml found."
     warn "sqlprism works best with SQL-based projects."
-    read -rp "  Continue anyway? [y/N] " confirm
-    [[ "$confirm" != [yY] ]] && exit 0
+    if ! $FORCE; then
+        read -rp "  Continue anyway? [y/N] " confirm
+        [[ "$confirm" != [yY] ]] && exit 0
+    fi
 fi
 
 echo -e "  Found: ${GREEN}$SQL_COUNT SQL files${RESET}"
@@ -90,7 +105,6 @@ if [[ ! -f "sqlprism.yml" ]] && [[ ! -f "sqlprism.json" ]]; then
     echo ""
     warn "Edit sqlprism.yml to configure your SQL repos/paths"
 else
-    skip() { echo -e "${DIM}  - $* (already exists, skipping)${RESET}"; }
     skip "sqlprism config already exists"
 fi
 

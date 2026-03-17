@@ -3,3 +3,31 @@
 *.swo
 *~
 .netrwhist
+
+.env
+.env.*
+!.env.template
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+.idea/
+.vscode/
+node_modules/
+*.egg-info/
+dist/
+build/
+
+# Team data (sensitive — only templates are committed)
+# Everything else is gitignored. Copy TEMPLATE files to start.
+team/engagements/*.yml
+!team/engagements/TEMPLATE.yml
+team/one-on-ones/*.md
+!team/one-on-ones/TEMPLATE.md
+team/weekly-status/*.md
+!team/weekly-status/TEMPLATE.md
+team/my-promotion-tracker.yml
+team/my-roster.yml
+team/personal/my-*.md

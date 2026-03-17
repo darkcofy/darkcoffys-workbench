@@ -102,7 +102,7 @@ shell-rc: ## Wire up shell (starship, zoxide, direnv, fzf, aliases) in your rc f
 	@echo -e "$(YELLOW)Setting up shell rc...$(RESET)"
 	@# Detect user's shell rc file
 	@RCFILE=""; \
-	if [ -n "$$ZSH_VERSION" ] || [ "$$(basename $$SHELL)" = "zsh" ]; then \
+	if echo "$$SHELL" | grep -q zsh; then \
 		RCFILE="$(HOME)/.zshrc"; \
 	else \
 		RCFILE="$(HOME)/.bashrc"; \
@@ -262,6 +262,13 @@ else
 		echo -e "$(DIM)  Docker already installed ($$(docker --version))$(RESET)"; \
 	fi
 endif
+
+# ═══════════════════════════════════════════════
+# Tests
+# ═══════════════════════════════════════════════
+
+test: ## Run test suite
+	@$(CURDIR)/tests/run-tests.sh
 
 # ═══════════════════════════════════════════════
 # Cleanup

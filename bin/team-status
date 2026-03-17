@@ -14,15 +14,22 @@ set -euo pipefail
 #   team-status promotion      Show promotion tracker summary
 # ──────────────────────────────────────────────
 
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-RED='\033[0;31m'
-DIM='\033[2m'
-BOLD='\033[1m'
-RESET='\033[0m'
+# Resolve symlinks portably (works on both Linux and macOS)
+resolve_path() {
+    local target="$1"
+    while [ -L "$target" ]; do
+        local dir="$(cd "$(dirname "$target")" && pwd)"
+        target="$(readlink "$target")"
+        [[ "$target" != /* ]] && target="$dir/$target"
+    done
+    echo "$(cd "$(dirname "$target")" && pwd)/$(basename "$target")"
+}
+SCRIPT_PATH="$(resolve_path "${BASH_SOURCE[0]}")"
+WORKBENCH_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 
-TEAM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/team"
+source "$WORKBENCH_DIR/lib/common.sh"
+
+TEAM_DIR="$WORKBENCH_DIR/team"
 SECTION="${1:-all}"
 
 # ── Check for yq ──
@@ -108,10 +115,13 @@ show_engagements() {
 # Team
 # ══════════════════════════════════════════════
 show_team() {
-    local roster="$TEAM_DIR/roster.yml"
+    # Look for user's copy first, then template
+    local roster="$TEAM_DIR/my-roster.yml"
+    [[ ! -f "$roster" ]] && roster="$TEAM_DIR/TEMPLATE-roster.yml"
     if [[ ! -f "$roster" ]]; then
         echo -e "  ${BOLD}Team${RESET}"
-        echo -e "    ${DIM}No roster yet. Fill in team/roster.yml${RESET}"
+        echo -e "    ${DIM}No roster yet. Copy template:${RESET}"
+        echo -e "    ${CYAN}cp team/TEMPLATE-roster.yml team/my-roster.yml${RESET}"
         echo ""
         return
     fi
@@ -140,10 +150,12 @@ show_team() {
 # Promotion progress
 # ══════════════════════════════════════════════
 show_promotion() {
-    local tracker="$TEAM_DIR/promotion-tracker.yml"
+    local tracker="$TEAM_DIR/my-promotion-tracker.yml"
+    [[ ! -f "$tracker" ]] && tracker="$TEAM_DIR/TEMPLATE-promotion-tracker.yml"
     if [[ ! -f "$tracker" ]]; then
         echo -e "  ${BOLD}Promotion Tracker${RESET}"
-        echo -e "    ${DIM}Not started. Fill in team/promotion-tracker.yml${RESET}"
+        echo -e "    ${DIM}Not started. Copy template:${RESET}"
+        echo -e "    ${CYAN}cp team/TEMPLATE-promotion-tracker.yml team/my-promotion-tracker.yml${RESET}"
         echo ""
         return
     fi

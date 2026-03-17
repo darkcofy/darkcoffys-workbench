@@ -159,23 +159,27 @@ Requires `yq` (installed automatically by `./setup`).
 
 ## Getting Started
 
+All templates are committed. Your data is gitignored. Copy templates to start:
+
 ```bash
-# 1. Fill in the promotion tracker
-nvim team/promotion-tracker.yml
+# 1. Create your promotion tracker (gitignored — private)
+cp team/TEMPLATE-promotion-tracker.yml team/my-promotion-tracker.yml
+nvim team/my-promotion-tracker.yml
 # Set: target_role, target_date, start_date, counselor, sponsor
 
 # 2. Read the 90-day plan
-nvim team/personal/first-90-days.md
+cp team/personal/TEMPLATE-first-90-days.md team/personal/my-first-90-days.md
+nvim team/personal/my-first-90-days.md
 
-# 3. Create your team roster
-nvim team/roster.yml
-# Add each direct report with skills, engagement, development goals
+# 3. Create your team roster (gitignored — private)
+cp team/TEMPLATE-roster.yml team/my-roster.yml
+nvim team/my-roster.yml
 
-# 4. Create engagement trackers
+# 4. Create engagement trackers (gitignored — private)
 cp team/engagements/TEMPLATE.yml team/engagements/client-x-platform.yml
 nvim team/engagements/client-x-platform.yml
 
-# 5. Start 1:1 notes
+# 5. Start 1:1 notes (gitignored — private)
 cp team/one-on-ones/TEMPLATE.md team/one-on-ones/sarah-chen.md
 
 # 6. Every Friday
@@ -186,9 +190,13 @@ team-status                                     # check your dashboard
 
 ## Privacy
 
-These files contain sensitive information (people's performance, client budgets, your career goals). Either:
-- Keep the entire `team/` directory in a **separate private repo**
-- Add filled-in files to `.gitignore` (templates stay committed)
-- Encrypt with `git-crypt` if you want it in the same repo
+**Templates are committed. Your filled-in data is gitignored automatically.**
 
-Templates (`TEMPLATE.yml`, `TEMPLATE.md`) are safe to share.
+The `.gitignore` excludes:
+- `team/my-*.yml` — your promotion tracker and roster
+- `team/engagements/*.yml` (except TEMPLATE)
+- `team/one-on-ones/*.md` (except TEMPLATE)
+- `team/weekly-status/*.md` (except TEMPLATE)
+- `team/personal/my-*.md` — your personal plans
+
+Templates (`TEMPLATE-*`, `TEMPLATE.*`) are safe to share — they only have commented-out examples.

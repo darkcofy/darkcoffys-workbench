@@ -12,19 +12,22 @@ set -euo pipefail
 #   scaffold /path/to/repo  Scaffold a specific repo
 # ──────────────────────────────────────────────
 
-WORKBENCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Resolve symlinks portably (works on both Linux and macOS)
+resolve_path() {
+    local target="$1"
+    while [ -L "$target" ]; do
+        local dir="$(cd "$(dirname "$target")" && pwd)"
+        target="$(readlink "$target")"
+        [[ "$target" != /* ]] && target="$dir/$target"
+    done
+    echo "$(cd "$(dirname "$target")" && pwd)/$(basename "$target")"
+}
+SCRIPT_PATH="$(resolve_path "${BASH_SOURCE[0]}")"
+WORKBENCH_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+
+source "$WORKBENCH_DIR/lib/common.sh"
+
 TARGET="${1:-.}"
-
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-DIM='\033[2m'
-RESET='\033[0m'
-
-info()  { echo -e "${GREEN}  ✓ $*${RESET}"; }
-warn()  { echo -e "${YELLOW}  → $*${RESET}"; }
-step()  { echo -e "${CYAN}  ▸ $*${RESET}"; }
-skip()  { echo -e "${DIM}  - $* (already exists, skipping)${RESET}"; }
 
 cd "$TARGET"
 
@@ -46,21 +49,25 @@ find . -maxdepth 3 -name "*.sql" -print -quit 2>/dev/null | grep -q . && HAS_SQL
 step "Setting up agent config..."
 mkdir -p agents
 if [[ ! -f "agents/config.yaml" ]]; then
-    cp "$WORKBENCH_DIR/agents/config.yaml" agents/config.yaml
+    if [[ -f "$WORKBENCH_DIR/agents/config.yaml" ]]; then
+        cp "$WORKBENCH_DIR/agents/config.yaml" agents/config.yaml
 
-    # Auto-detect and fill in some values
-    if [[ -d ".git" ]]; then
-        DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
-        sed -i "s/default_branch: main/default_branch: $DEFAULT_BRANCH/" agents/config.yaml
+        # Auto-detect and fill in some values
+        if [[ -d ".git" ]]; then
+            DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+            sed_inplace "s/default_branch: main/default_branch: $DEFAULT_BRANCH/" agents/config.yaml
 
-        # Try to detect GitHub repo
-        REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-        if [[ "$REMOTE_URL" == *"github.com"* ]]; then
-            sed -i 's/engine: github/engine: github  # auto-detected/' agents/config.yaml
+            # Try to detect GitHub repo
+            REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+            if [[ "$REMOTE_URL" == *"github.com"* ]]; then
+                sed_inplace 's/engine: github/engine: github  # auto-detected/' agents/config.yaml
+            fi
         fi
-    fi
 
-    info "Created agents/config.yaml"
+        info "Created agents/config.yaml"
+    else
+        warn "Template missing: agents/config.yaml"
+    fi
 else
     skip "agents/config.yaml"
 fi
@@ -68,8 +75,12 @@ fi
 # Copy agent instruction files
 for agent_file in research.md sdlc.md artifacts.md impact-analysis.md; do
     if [[ ! -f "agents/$agent_file" ]]; then
-        cp "$WORKBENCH_DIR/agents/$agent_file" "agents/$agent_file"
-        info "Created agents/$agent_file"
+        if [[ -f "$WORKBENCH_DIR/agents/$agent_file" ]]; then
+            cp "$WORKBENCH_DIR/agents/$agent_file" "agents/$agent_file"
+            info "Created agents/$agent_file"
+        else
+            warn "Template missing: agents/$agent_file"
+        fi
     else
         skip "agents/$agent_file"
     fi
@@ -88,26 +99,42 @@ done
 
 # ADR template
 if [[ ! -f "agents/templates/adrs/000-template.md" ]]; then
-    cp "$WORKBENCH_DIR/agents/templates/adrs/000-template.md" "agents/templates/adrs/000-template.md"
-    info "Created agents/templates/adrs/000-template.md"
+    if [[ -f "$WORKBENCH_DIR/agents/templates/adrs/000-template.md" ]]; then
+        cp "$WORKBENCH_DIR/agents/templates/adrs/000-template.md" "agents/templates/adrs/000-template.md"
+        info "Created agents/templates/adrs/000-template.md"
+    else
+        warn "Template missing: agents/templates/adrs/000-template.md"
+    fi
 fi
 
 # Runbook
 if [[ ! -f "agents/templates/runbooks/data-incident.md" ]]; then
-    cp "$WORKBENCH_DIR/agents/templates/runbooks/data-incident.md" "agents/templates/runbooks/data-incident.md"
-    info "Created agents/templates/runbooks/data-incident.md"
+    if [[ -f "$WORKBENCH_DIR/agents/templates/runbooks/data-incident.md" ]]; then
+        cp "$WORKBENCH_DIR/agents/templates/runbooks/data-incident.md" "agents/templates/runbooks/data-incident.md"
+        info "Created agents/templates/runbooks/data-incident.md"
+    else
+        warn "Template missing: agents/templates/runbooks/data-incident.md"
+    fi
 fi
 
 # Domain ownership (project root — this is a living doc, not a template)
 if [[ ! -f "domain-ownership.yml" ]] && ($HAS_SQL || $HAS_DBT); then
-    cp "$WORKBENCH_DIR/agents/templates/domain-ownership.yml" domain-ownership.yml
-    info "Created domain-ownership.yml (fill in owners and stakeholders)"
+    if [[ -f "$WORKBENCH_DIR/agents/templates/domain-ownership.yml" ]]; then
+        cp "$WORKBENCH_DIR/agents/templates/domain-ownership.yml" domain-ownership.yml
+        info "Created domain-ownership.yml (fill in owners and stakeholders)"
+    else
+        warn "Template missing: agents/templates/domain-ownership.yml"
+    fi
 fi
 
 # Modeling conventions (project root)
 if [[ ! -f "modeling-conventions.md" ]] && ($HAS_SQL || $HAS_DBT); then
-    cp "$WORKBENCH_DIR/agents/templates/modeling-conventions.md" modeling-conventions.md
-    info "Created modeling-conventions.md (review and adjust for your org)"
+    if [[ -f "$WORKBENCH_DIR/agents/templates/modeling-conventions.md" ]]; then
+        cp "$WORKBENCH_DIR/agents/templates/modeling-conventions.md" modeling-conventions.md
+        info "Created modeling-conventions.md (review and adjust for your org)"
+    else
+        warn "Template missing: agents/templates/modeling-conventions.md"
+    fi
 fi
 
 # Diagram templates
@@ -444,14 +471,18 @@ fi
 # ── 8. sqlfluff config (SQL/dbt projects) ──
 if ($HAS_SQL || $HAS_DBT) && [[ ! -f ".sqlfluff" ]]; then
     step "Setting up sqlfluff..."
-    cp "$WORKBENCH_DIR/agents/templates/sqlfluff.cfg" .sqlfluff
+    if [[ -f "$WORKBENCH_DIR/agents/templates/sqlfluff.cfg" ]]; then
+        cp "$WORKBENCH_DIR/agents/templates/sqlfluff.cfg" .sqlfluff
 
-    # Adjust templater for non-dbt projects
-    if ! $HAS_DBT; then
-        sed -i 's/templater = dbt/templater = raw/' .sqlfluff
+        # Adjust templater for non-dbt projects
+        if ! $HAS_DBT; then
+            sed_inplace 's/templater = dbt/templater = raw/' .sqlfluff
+        fi
+
+        info "Created .sqlfluff"
+    else
+        warn "Template missing: agents/templates/sqlfluff.cfg"
     fi
-
-    info "Created .sqlfluff"
 elif ($HAS_SQL || $HAS_DBT); then
     skip ".sqlfluff"
 fi
@@ -459,15 +490,23 @@ fi
 # ── 9. direnv + .env template ──
 step "Setting up environment management..."
 if [[ ! -f ".envrc" ]]; then
-    cp "$WORKBENCH_DIR/agents/templates/envrc" .envrc
-    info "Created .envrc (run 'direnv allow' to activate)"
+    if [[ -f "$WORKBENCH_DIR/agents/templates/envrc" ]]; then
+        cp "$WORKBENCH_DIR/agents/templates/envrc" .envrc
+        info "Created .envrc (run 'direnv allow' to activate)"
+    else
+        warn "Template missing: agents/templates/envrc"
+    fi
 else
     skip ".envrc"
 fi
 
 if [[ ! -f ".env.template" ]]; then
-    cp "$WORKBENCH_DIR/agents/templates/env.template" .env.template
-    info "Created .env.template"
+    if [[ -f "$WORKBENCH_DIR/agents/templates/env.template" ]]; then
+        cp "$WORKBENCH_DIR/agents/templates/env.template" .env.template
+        info "Created .env.template"
+    else
+        warn "Template missing: agents/templates/env.template"
+    fi
 else
     skip ".env.template"
 fi
